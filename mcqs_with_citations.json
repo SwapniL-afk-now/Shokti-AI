@@ -1,0 +1,2235 @@
+{
+  "store_name": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+  "topic": "Chapter 06 and Chapter 08",
+  "number_of_mcqs": 30,
+  "difficulty": "mixed: easy 30%, medium 50%, hard 20%",
+  "chapters": [
+    {
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "book_page_range": "198-208",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "number_of_mcqs": 15
+    },
+    {
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "book_page_range": "235-254",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "number_of_mcqs": 15
+    }
+  ],
+  "mcqs": [
+    {
+      "id": 1,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটা (Bryophyta) কোন ধরনের উদ্ভিদ হিসেবে পরিচিত?",
+      "options": {
+        "A": "জলজ উদ্ভিদ",
+        "B": "স্থলজ উদ্ভিদ",
+        "C": "উভচর উদ্ভিদ",
+        "D": "মরুজ উদ্ভিদ"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "উভচর উদ্ভিদ"
+      },
+      "explanation": "জীবনচক্র ও নিষেকক্রিয়া সম্পন্ন করতে পানির প্রয়োজন হয় বলে ব্রায়োফাইটাকে উভচর উদ্ভিদ বলা হয়।",
+      "difficulty": "easy",
+      "pdf_page_number": 198,
+      "source_quote": "স্থলজ প্রজাতিগুলোরও জীবনচক্র, বিশেষ করে নিষেকক্রিয়া সম্পন্ন করতে পানির প্রয়োজন হয়। তাই ব্রায়োফাইটা উভচর উদ্ভিদ হিসেবে পরিচিত।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "স্থলজ প্রজাতিগুলোরও জীবনচক্র, বিশেষ করে নিষেকক্রিয়া সম্পন্ন করতে পানির প্রয়োজন হয়। তাই ব্রায়োফাইটা উভচর উদ্ভিদ হিসেবে পরিচিত।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "স্থলজ প্রজাতিগুলোরও জীবনচক্র, বিশেষ করে নিষেকক্রিয়া সম্পন্ন করতে পানির প্রয়োজন হয়। তাই ব্রায়োফাইটা উভচর উদ্ভিদ হিসেবে পরিচিত।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 2,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "কে ১৮৬৪ সালে 'ব্রায়োফাইটা' (Bryophyta) নামটি ব্যবহার করেন?",
+      "options": {
+        "A": "মারগুলিস (Margulis)",
+        "B": "ব্রাউন (Braun)",
+        "C": "ওয়ালেস (Wallace)",
+        "D": "স্যান্ডার্স (Sanders)"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "ব্রাউন (Braun)"
+      },
+      "explanation": "বিজ্ঞানী ব্রাউন (Braun) ১৮৬৪ সালে ব্রায়োফাইটা নামটি ব্যবহার করেন।",
+      "difficulty": "medium",
+      "pdf_page_number": 198,
+      "source_quote": "বিজ্ঞানী ব্রাউন (Braun) ১৮৬৪ সালে ব্রায়োফাইটা নামটি ব্যবহার করেন।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "বিজ্ঞানী ব্রাউন (Braun) ১৮৬৪ সালে ব্রায়োফাইটা নামটি ব্যবহার করেন।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "বিজ্ঞানী ব্রাউন (Braun) ১৮৬৪ সালে ব্রায়োফাইটা নামটি ব্যবহার করেন।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 3,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটার দেহ কোন দশার উদ্ভিদ?",
+      "options": {
+        "A": "স্পোরোফাইট (Sporophyte)",
+        "B": "গ্যামিটোফাইট (Gametophyte)",
+        "C": "ডিপ্লয়েড (Diploid)",
+        "D": "ভ্রূণীয় দশা"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "গ্যামিটোফাইট (Gametophyte)"
+      },
+      "explanation": "ব্রায়োফাইটার দেহ গ্যামিটোফাইট তথা হ্যাপ্লয়েড।",
+      "difficulty": "easy",
+      "pdf_page_number": 198,
+      "source_quote": "এদের দেহ গ্যামিটোফাইট (gametophyte) তথা হ্যাপ্লয়েড।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "এদের দেহ গ্যামিটোফাইট (gametophyte) তথা হ্যাপ্লয়েড।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "এদের দেহ গ্যামিটোফাইট (gametophyte) তথা হ্যাপ্লয়েড।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 4,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "বাংলাদেশে ব্রায়োফাইটার কয়টি প্রজাতি শনাক্ত করা হয়েছে?",
+      "options": {
+        "A": "২৪৮টি",
+        "B": "২৪,০০০টি",
+        "C": "১৫,৬০০টি",
+        "D": "৭৪টি"
+      },
+      "correct_answer": {
+        "option": "A",
+        "text": "২৪৮টি"
+      },
+      "explanation": "বাংলাদেশ থেকে ব্রায়োফাইটা বিভাগের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+      "difficulty": "hard",
+      "pdf_page_number": 198,
+      "source_quote": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 5,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটার গ্যামিটোফাইট কেমন?",
+      "options": {
+        "A": "পরজীবী",
+        "B": "নির্ভরশীল",
+        "C": "স্বতন্ত্র ও স্বভোজী",
+        "D": "অকোষীয়"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "স্বতন্ত্র ও স্বভোজী"
+      },
+      "explanation": "ব্রায়োফাইটার গ্যামিটোফাইট সর্বদাই স্বতন্ত্র ও স্বভোজী উদ্ভিদ।",
+      "difficulty": "medium",
+      "pdf_page_number": 198,
+      "source_quote": "গ্যামিটোফাইট সর্বদাই স্বতন্ত্র ও স্বভোজী উদ্ভিদ।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "গ্যামিটোফাইট সর্বদাই স্বতন্ত্র ও স্বভোজী উদ্ভিদ।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "গ্যামিটোফাইট সর্বদাই স্বতন্ত্র ও স্বভোজী উদ্ভিদ।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 6,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটার উদ্ভিদগুলো কী ধরনের?",
+      "options": {
+        "A": "সপুস্পক",
+        "B": "সবীজী",
+        "C": "অপুষ্পক ও অবীজী",
+        "D": "একবীজপত্রী"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "অপুষ্পক ও অবীজী"
+      },
+      "explanation": "ব্রায়োফাইটা অপুষ্পক ও অবীজী বহুকোষী উদ্ভিদ।",
+      "difficulty": "easy",
+      "pdf_page_number": 198,
+      "source_quote": "এরা বহুকোষী উদ্ভিদ। এরা অপুষ্পক ও অবীজী।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "এরা বহুকোষী উদ্ভিদ। এরা অপুষ্পক ও অবীজী।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "এরা বহুকোষী উদ্ভিদ। এরা অপুষ্পক ও অবীজী।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 7,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "গ্রিক শব্দ 'Bryon' এর অর্থ কী?",
+      "options": {
+        "A": "উদ্ভিদ",
+        "B": "মস",
+        "C": "মূল",
+        "D": "পাতা"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "মস"
+      },
+      "explanation": "গ্রিক Bryon মানে মস এবং phyton মানে উদ্ভিদ।",
+      "difficulty": "medium",
+      "pdf_page_number": 198,
+      "source_quote": "(Gk. Bryon = মস এবং phyton = উদ্ভিদ)",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "(Gk. Bryon = মস এবং phyton = উদ্ভিদ)",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "(Gk. Bryon = মস এবং phyton = উদ্ভিদ)",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 8,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "Wallace, Sanders ও Ferl (১৯৯৬) অনুযায়ী পৃথিবীতে ব্রায়োফাইটস্-এর প্রজাতির সংখ্যা কত?",
+      "options": {
+        "A": "১৫,৬০০",
+        "B": "২৪,০০০",
+        "C": "৭৪",
+        "D": "২৪৮"
+      },
+      "correct_answer": {
+        "option": "A",
+        "text": "১৫,৬০০"
+      },
+      "explanation": "বই অনুযায়ী Wallace, Sanders ও Ferl (১৯৯৬) এর তথ্যমতে প্রজাতির সংখ্যা ১৫,৬০০।",
+      "difficulty": "hard",
+      "pdf_page_number": 198,
+      "source_quote": "Wallace, Sanders ও Ferl-এর Biology (১৯৯৬) অনুয়ায়ী ব্রায়োফাইট্স-এর প্রজাতির সংখ্যা ১৫,৬০০",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "Wallace, Sanders ও Ferl-এর Biology (১৯৯৬) অনুয়ায়ী ব্রায়োফাইট্স-এর প্রজাতির সংখ্যা ১৫,৬০০",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "Wallace, Sanders ও Ferl-এর Biology (১৯৯৬) অনুয়ায়ী ব্রায়োফাইট্স-এর প্রজাতির সংখ্যা ১৫,৬০০",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 9,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটস্-এর অধিকাংশই কী ধরনের উদ্ভিদ?",
+      "options": {
+        "A": "জলজ",
+        "B": "স্থলজ",
+        "C": "প্যারাসাইটিক",
+        "D": "এপিফাইট"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "স্থলজ"
+      },
+      "explanation": "ব্রায়োফাইটস্-এর অধিকাংশই স্থলজ প্রজাতি।",
+      "difficulty": "easy",
+      "pdf_page_number": 198,
+      "source_quote": "ব্রায়োফাইট্স-এর প্রজাতির সংখ্যা ১৫,৬০০ যার অধিকাংশই স্থলজ, কিছু জলজ।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "ব্রায়োফাইট্স-এর প্রজাতির সংখ্যা ১৫,৬০০ যার অধিকাংশই স্থলজ, কিছু জলজ।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "ব্রায়োফাইট্স-এর প্রজাতির সংখ্যা ১৫,৬০০ যার অধিকাংশই স্থলজ, কিছু জলজ।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 10,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটা একটি বিভাগ হিসেবে গণ্য করা হয় কোন শ্রেণিবিন্যাস অনুযায়ী?",
+      "options": {
+        "A": "প্রচলিত শ্রেণিবিন্যাস",
+        "B": "মারগুলিসের শ্রেণিবিন্যাস",
+        "C": "লিনিয়াসের শ্রেণিবিন্যাস",
+        "D": "বেসীর শ্রেণিবিন্যাস"
+      },
+      "correct_answer": {
+        "option": "A",
+        "text": "প্রচলিত শ্রেণিবিন্যাস"
+      },
+      "explanation": "প্রচলিত শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি বিভাগ।",
+      "difficulty": "medium",
+      "pdf_page_number": 198,
+      "source_quote": "প্রচলিত শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি বিভাগ।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "প্রচলিত শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি বিভাগ।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "প্রচলিত শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি বিভাগ।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 11,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "মারগুলিসের (Margulis) শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা কী?",
+      "options": {
+        "A": "শুধুমাত্র বিভাগ",
+        "B": "গ্রেড এবং ফাইলাম",
+        "C": "শুধুমাত্র বর্গ",
+        "D": "গোত্র"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "গ্রেড এবং ফাইলাম"
+      },
+      "explanation": "মারগুলিসের শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি গ্রেড এবং ফাইলাম।",
+      "difficulty": "hard",
+      "pdf_page_number": 198,
+      "source_quote": "Margulis এর শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি গ্রেড এবং ফাইলাম (বিভাগ)।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "Margulis এর শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি গ্রেড এবং ফাইলাম (বিভাগ)।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "Margulis এর শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি গ্রেড এবং ফাইলাম (বিভাগ)।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 12,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটসের কতটি গোত্র বাংলাদেশে পাওয়া গেছে?",
+      "options": {
+        "A": "২৪৮",
+        "B": "৭৪",
+        "C": "৩৪",
+        "D": "১৫"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "৩৪"
+      },
+      "explanation": "বাংলাদেশে এ বিভাগের অন্তর্গত ৩৪টি গোত্র শনাক্ত হয়েছে।",
+      "difficulty": "hard",
+      "pdf_page_number": 198,
+      "source_quote": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 13,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "ব্রায়োফাইটসে কয়টি গণ বাংলাদেশে শনাক্ত করা হয়েছে?",
+      "options": {
+        "A": "৩৪",
+        "B": "৭৪",
+        "C": "২৪৮",
+        "D": "১৫"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "৭৪"
+      },
+      "explanation": "বাংলাদেশে ব্রায়োফাইটার ৭৪টি গণ শনাক্ত করা হয়েছে।",
+      "difficulty": "medium",
+      "pdf_page_number": 198,
+      "source_quote": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 14,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "সব ব্রায়োফাইটার সাধারণ বৈশিষ্ট্য কোনটি?",
+      "options": {
+        "A": "সবগুলো একবীজপত্রী",
+        "B": "সবগুলো বহুকোষী",
+        "C": "সবগুলো সপুষ্পক",
+        "D": "সবগুলো জলজ"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "সবগুলো বহুকোষী"
+      },
+      "explanation": "ব্রায়োফাইটার সব প্রজাতি বহুকোষী।",
+      "difficulty": "easy",
+      "pdf_page_number": 198,
+      "source_quote": "এরা বহুকোষী উদ্ভিদ।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "এরা বহুকোষী উদ্ভিদ।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "এরা বহুকোষী উদ্ভিদ।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 15,
+      "chapter": "Chapter 06",
+      "topic": "ব্রায়োফাইটা ও টেরিডোফাইটা (Bryophyta and Pteridophyta)",
+      "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+      "book_page_range": "198-208",
+      "question": "Bryophyta বর্গের উদ্ভিদকে কী বলা হয়?",
+      "options": {
+        "A": "টেরিডোফাইটস",
+        "B": "ব্রায়োফাইটস্ (Bryophytes)",
+        "C": "মস উদ্ভিদ",
+        "D": "অপুষ্পক উদ্ভিদ"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "ব্রায়োফাইটস্ (Bryophytes)"
+      },
+      "explanation": "Bryophyta বর্গের উদ্ভিদকে Bryophytes বলে।",
+      "difficulty": "easy",
+      "pdf_page_number": 198,
+      "source_quote": "Bryophyta বর্গের উদ্ভিদকে Bryophytes (ব্রায়োফাইট্স) বলে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 198,
+          "book_page_range": "198-208",
+          "quoted_or_used_text": "Bryophyta বর্গের উদ্ভিদকে Bryophytes (ব্রায়োফাইট্স) বলে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "Bryophyta বর্গের উদ্ভিদকে Bryophytes (ব্রায়োফাইট্স) বলে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 0,
+            "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "198-208",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 16,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "একই উৎস থেকে সৃষ্ট সমধর্মী অবিচ্ছিন্ন কোষগুচ্ছকে কী বলে?",
+      "options": {
+        "A": "কোষ (Cell)",
+        "B": "অঙ্গ (Organ)",
+        "C": "টিস্যু (Tissue)",
+        "D": "তন্ত্র (System)"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "টিস্যু (Tissue)"
+      },
+      "explanation": "একই উৎস থেকে সৃষ্ট, একই ধরনের কাজ সম্পন্নকারী সমধর্মী একটি অবিচ্ছিন্ন কোষগুচ্ছকে টিস্যু বা কোষকলা বলে।",
+      "difficulty": "easy",
+      "pdf_page_number": 235,
+      "source_quote": "একই উৎস থেকে সৃষ্ট, একই ধরনের কাজ সম্পন্নকারী সমধর্মী একটি অবিচ্ছিন্ন কোষগুচ্ছকে টিস্যু বা কোষকলা বলে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "একই উৎস থেকে সৃষ্ট, একই ধরনের কাজ সম্পন্নকারী সমধর্মী একটি অবিচ্ছিন্ন কোষগুচ্ছকে টিস্যু বা কোষকলা বলে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "একই উৎস থেকে সৃষ্ট, একই ধরনের কাজ সম্পন্নকারী সমধর্মী একটি অবিচ্ছিন্ন কোষগুচ্ছকে টিস্যু বা কোষকলা বলে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 17,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "কোষের বিভাজন ক্ষমতা অনুযায়ী উদ্ভিদ টিস্যু প্রধানত কত প্রকার?",
+      "options": {
+        "A": "দুই প্রকার",
+        "B": "তিন প্রকার",
+        "C": "চার প্রকার",
+        "D": "পাঁচ প্রকার"
+      },
+      "correct_answer": {
+        "option": "A",
+        "text": "দুই প্রকার"
+      },
+      "explanation": "সব ধরনের টিস্যুকে কোষের বিভাজন অনুযায়ী ভাজক টিস্যু ও স্থায়ী টিস্যু এই দুই ভাগে ভাগ করা যায়।",
+      "difficulty": "easy",
+      "pdf_page_number": 235,
+      "source_quote": "সব ধরনের টিস্যুকে, টিস্যু গঠনকারী কোষের বিভাজন অনুযায়ী দু'টি ভাগে ভাগ করা যায়; যথা-১। ভাজক টিস্যু এবং ২। স্থায়ী টিস্যু।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "সব ধরনের টিস্যুকে, টিস্যু গঠনকারী কোষের বিভাজন অনুযায়ী দু'টি ভাগে ভাগ করা যায়; যথা-১। ভাজক টিস্যু এবং ২। স্থায়ী টিস্যু।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "সব ধরনের টিস্যুকে, টিস্যু গঠনকারী কোষের বিভাজন অনুযায়ী দু'টি ভাগে ভাগ করা যায়; যথা-১। ভাজক টিস্যু এবং ২। স্থায়ী টিস্যু।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 18,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "ভাজক টিস্যুর অপর নাম কী?",
+      "options": {
+        "A": "স্থায়ী টিস্যু",
+        "B": "মেরিস্টেম (Meristem)",
+        "C": "জটিল টিস্যু",
+        "D": "সরল টিস্যু"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "মেরিস্টেম (Meristem)"
+      },
+      "explanation": "ভাজক টিস্যুর অপর নাম মেরিস্টেম।",
+      "difficulty": "easy",
+      "pdf_page_number": 235,
+      "source_quote": "ভাজক টিস্যুর অপর নাম মেরিস্টেম।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "ভাজক টিস্যুর অপর নাম মেরিস্টেম।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "ভাজক টিস্যুর অপর নাম মেরিস্টেম।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 19,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু কত প্রকার?",
+      "options": {
+        "A": "দুই",
+        "B": "তিন",
+        "C": "চার",
+        "D": "পাঁচ"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "তিন"
+      },
+      "explanation": "গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু তিন প্রকার: সরল, জটিল ও ক্ষরণকারী টিস্যু।",
+      "difficulty": "medium",
+      "pdf_page_number": 235,
+      "source_quote": "গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু তিন প্রকার যথা: (১) সরল টিস্যু (simple tissue), (২) জটিল বা যৌগিক টিস্যু (complex tissue) এবং (৩) ক্ষরণকারী বা নিঃস্রাবী টিস্যু (secretory tissue)।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু তিন প্রকার যথা: (১) সরল টিস্যু (simple tissue), (২) জটিল বা যৌগিক টিস্যু (complex tissue) এবং (৩) ক্ষরণকারী বা নিঃস্রাবী টিস্যু (secretory tissue)।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু তিন প্রকার যথা: (১) সরল টিস্যু (simple tissue), (২) জটিল বা যৌগিক টিস্যু (complex tissue) এবং (৩) ক্ষরণকারী বা নিঃস্রাবী টিস্যু (secretory tissue)।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 20,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "ভাজক টিস্যুর কোষ প্রাচীর কী দ্বারা গঠিত?",
+      "options": {
+        "A": "লিগনিন",
+        "B": "সুবেরিন",
+        "C": "সেলুলোজ",
+        "D": "কিউটিন"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "সেলুলোজ"
+      },
+      "explanation": "ভাজক টিস্যুর কোষগুলো সেলুলোজ নির্মিত পাতলা কোষপ্রাচীর বিশিষ্ট হয়।",
+      "difficulty": "medium",
+      "pdf_page_number": 235,
+      "source_quote": "এই টিস্যুর কোষগুলো সেলুলোজ নির্মিত পাতলা কোষপ্রাচীর বিশিষ্ট হয়।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "এই টিস্যুর কোষগুলো সেলুলোজ নির্মিত পাতলা কোষপ্রাচীর বিশিষ্ট হয়।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "এই টিস্যুর কোষগুলো সেলুলোজ নির্মিত পাতলা কোষপ্রাচীর বিশিষ্ট হয়।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 21,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "জটিল টিস্যু প্রধানত কত প্রকার?",
+      "options": {
+        "A": "এক",
+        "B": "দুই",
+        "C": "তিন",
+        "D": "চার"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "দুই"
+      },
+      "explanation": "জটিল টিস্যু প্রধানত দুই প্রকার: জাইলেম ও ফ্লোয়েম।",
+      "difficulty": "easy",
+      "pdf_page_number": 235,
+      "source_quote": "কাজ, অবস্থান ও গঠন প্রকৃতি অনুযায়ী জটিল টিস্যু প্রধানত দু'প্রকার। যথা (ক) জাইলেম টিস্যু এবং (খ) ফ্লোয়েম টিস্যু।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "কাজ, অবস্থান ও গঠন প্রকৃতি অনুযায়ী জটিল টিস্যু প্রধানত দু'প্রকার। যথা (ক) জাইলেম টিস্যু এবং (খ) ফ্লোয়েম টিস্যু।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "কাজ, অবস্থান ও গঠন প্রকৃতি অনুযায়ী জটিল টিস্যু প্রধানত দু'প্রকার। যথা (ক) জাইলেম টিস্যু এবং (খ) ফ্লোয়েম টিস্যু।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 22,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "ক্ষরণকারী টিস্যু কত প্রকার?",
+      "options": {
+        "A": "দুই",
+        "B": "তিন",
+        "C": "চার",
+        "D": "পাঁচ"
+      },
+      "correct_answer": {
+        "option": "A",
+        "text": "দুই"
+      },
+      "explanation": "ক্ষরণকারী বা নিঃস্রাবী টিস্যু দুই প্রকার: তরুক্ষীর টিস্যু ও গ্রন্থি টিস্যু।",
+      "difficulty": "medium",
+      "pdf_page_number": 235,
+      "source_quote": "ক্ষরণকারী টিস্যু দু'প্রকার। যথা: (i) তরুক্ষীর টিস্যু (laticiferous tissue) এবং (ii) গ্রন্থি টিস্যু (glandular tissue)",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "ক্ষরণকারী টিস্যু দু'প্রকার। যথা: (i) তরুক্ষীর টিস্যু (laticiferous tissue) এবং (ii) গ্রন্থি টিস্যু (glandular tissue)",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "ক্ষরণকারী টিস্যু দু'প্রকার। যথা: (i) তরুক্ষীর টিস্যু (laticiferous tissue) এবং (ii) গ্রন্থি টিস্যু (glandular tissue)",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 23,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "জাইলেম ও ফ্লোয়েম টিস্যু একত্রে কী গঠন করে?",
+      "options": {
+        "A": "সরল টিস্যু",
+        "B": "পরিবহনতন্ত্র",
+        "C": "এপিডার্মাল টিস্যুতন্ত্র",
+        "D": "গ্রাউন্ড টিস্যুতন্ত্র"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "পরিবহনতন্ত্র"
+      },
+      "explanation": "জাইলেম ও ফ্লোয়েম টিস্যু একত্রে পরিবহনতন্ত্র গঠন করে।",
+      "difficulty": "medium",
+      "pdf_page_number": 235,
+      "source_quote": "এ দু'প্রকার টিস্যু একত্রে পরিবহনতন্ত্র গঠন করে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "এ দু'প্রকার টিস্যু একত্রে পরিবহনতন্ত্র গঠন করে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "এ দু'প্রকার টিস্যু একত্রে পরিবহনতন্ত্র গঠন করে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 24,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "স্থায়ী টিস্যুর মৃত কোষে কী থাকে না?",
+      "options": {
+        "A": "কোষ প্রাচীর",
+        "B": "প্রোটোপ্লাজম",
+        "C": "সেলুলোজ",
+        "D": "নিউক্লিয়াস"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "প্রোটোপ্লাজম"
+      },
+      "explanation": "মৃত কোষে প্রোটোপ্লাজমবিহীন থাকে।",
+      "difficulty": "medium",
+      "pdf_page_number": 235,
+      "source_quote": "(iv) মৃত কোষ প্রোটোপ্লাজমবিহীন।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "(iv) মৃত কোষ প্রোটোপ্লাজমবিহীন।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "(iv) মৃত কোষ প্রোটোপ্লাজমবিহীন।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 25,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "ভাজক টিস্যুর কোষগুলো সাধারণত কী ধরনের আকৃতির হয়?",
+      "options": {
+        "A": "গোল",
+        "B": "ত্রিভুজাকার",
+        "C": "আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার",
+        "D": "তারাকৃতি"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার"
+      },
+      "explanation": "ভাজক টিস্যুর কোষগুলো সাধারণত আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার হয়।",
+      "difficulty": "medium",
+      "pdf_page_number": 235,
+      "source_quote": "ভাজক টিস্যুর কোষগুলো সাধারণত আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার হয়।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "ভাজক টিস্যুর কোষগুলো সাধারণত আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার হয়।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "ভাজক টিস্যুর কোষগুলো সাধারণত আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার হয়।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 26,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "পাতার প্রধান কাজ কী?",
+      "options": {
+        "A": "পানি পরিশোষণ",
+        "B": "খাদ্য তৈরি",
+        "C": "মাটির সাথে ধরে রাখা",
+        "D": "ফুল ফোটানো"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "খাদ্য তৈরি"
+      },
+      "explanation": "পাতার কাজ খাদ্য তৈরি করা।",
+      "difficulty": "easy",
+      "pdf_page_number": 235,
+      "source_quote": "স্থায়ী টিস্যুর কাজ: (i) খাদ্য তৈরি।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "স্থায়ী টিস্যুর কাজ: (i) খাদ্য তৈরি।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "স্থায়ী টিস্যুর কাজ: (i) খাদ্য তৈরি।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 27,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "স্থায়ী টিস্যুর নিউক্লিয়াস কেমন হয়?",
+      "options": {
+        "A": "স্বাভাবিকের চেয়ে বড়",
+        "B": "স্বাভাবিকের চেয়ে ছোট",
+        "C": "অনেকগুলো নিউক্লিয়াস থাকে",
+        "D": "নিউক্লিয়াস থাকে না"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "স্বাভাবিকের চেয়ে ছোট"
+      },
+      "explanation": "স্থায়ী টিস্যুর নিউক্লিয়াস স্বাভাবিকের চেয়ে ছোট এবং কোষের এক পাশে অবস্থান করে।",
+      "difficulty": "medium",
+      "pdf_page_number": 235,
+      "source_quote": "(vii) নিউক্লিয়াস স্বাভাবিকের চেয়ে ছোট এবং কোষের এক পাশে অবস্থান করে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "(vii) নিউক্লিয়াস স্বাভাবিকের চেয়ে ছোট এবং কোষের এক পাশে অবস্থান করে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "(vii) নিউক্লিয়াস স্বাভাবিকের চেয়ে ছোট এবং কোষের এক পাশে অবস্থান করে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 28,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "তরুক্ষীর টিস্যু কোন ধরনের টিস্যুর অন্তর্ভুক্ত?",
+      "options": {
+        "A": "সরল টিস্যু",
+        "B": "জটিল টিস্যু",
+        "C": "ক্ষরণকারী বা নিঃস্রাবী টিস্যু",
+        "D": "ভাজক টিস্যু"
+      },
+      "correct_answer": {
+        "option": "C",
+        "text": "ক্ষরণকারী বা নিঃস্রাবী টিস্যু"
+      },
+      "explanation": "তরুক্ষীর টিস্যু ক্ষরণকারী বা নিঃস্রাবী টিস্যু এর অন্তর্ভুক্ত।",
+      "difficulty": "easy",
+      "pdf_page_number": 235,
+      "source_quote": "ক্ষরণকারী টিস্যু দু'প্রকার। যথা: (i) তরুক্ষীর টিস্যু (laticiferous tissue) এবং (ii) গ্রন্থি টিস্যু (glandular tissue)",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "ক্ষরণকারী টিস্যু দু'প্রকার। যথা: (i) তরুক্ষীর টিস্যু (laticiferous tissue) এবং (ii) গ্রন্থি টিস্যু (glandular tissue)",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "ক্ষরণকারী টিস্যু দু'প্রকার। যথা: (i) তরুক্ষীর টিস্যু (laticiferous tissue) এবং (ii) গ্রন্থি টিস্যু (glandular tissue)",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 29,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "সরল স্থায়ী টিস্যু কত প্রকার?",
+      "options": {
+        "A": "দুই",
+        "B": "তিন",
+        "C": "চার",
+        "D": "পাঁচ"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "তিন"
+      },
+      "explanation": "সরল স্থায়ী টিস্যু তিন প্রকার: প্যারেনকাইমা, কোলেনকাইমা এবং স্ক্লেরেনকাইমা।",
+      "difficulty": "easy",
+      "pdf_page_number": 235,
+      "source_quote": "কোষের আকৃতি ও প্রকৃতির উপর নির্ভর করে সরল টিস্যুকে তিন ভাগে ভাগ করা হয়েছে; যথা: (১) প্যারেনকাইমা, (২) কোলেনকাইমা এবং (৩) স্ক্লেরেনকাইমা",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "কোষের আকৃতি ও প্রকৃতির উপর নির্ভর করে সরল টিস্যুকে তিন ভাগে ভাগ করা হয়েছে; যথা: (১) প্যারেনকাইমা, (২) কোলেনকাইমা এবং (৩) স্ক্লেরেনকাইমা",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "কোষের আকৃতি ও প্রকৃতির উপর নির্ভর করে সরল টিস্যুকে তিন ভাগে ভাগ করা হয়েছে; যথা: (১) প্যারেনকাইমা, (২) কোলেনকাইমা এবং (৩) স্ক্লেরেনকাইমা",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    },
+    {
+      "id": 30,
+      "chapter": "Chapter 08",
+      "topic": "টিস্যু ও টিস্যুতন্ত্র (Tissue and Tissue System)",
+      "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+      "book_page_range": "235-254",
+      "question": "স্থায়ী টিস্যুর উদ্ভব কীভাবে ঘটে?",
+      "options": {
+        "A": "ভাজক টিস্যুর কোষের ক্রমাগত বিভাজনে",
+        "B": "ভাজক টিস্যুর কোষের বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে",
+        "C": "কোষের মৃত হওয়ার মাধ্যমে",
+        "D": "কোষের আয়তন বৃদ্ধির মাধ্যমে"
+      },
+      "correct_answer": {
+        "option": "B",
+        "text": "ভাজক টিস্যুর কোষের বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে"
+      },
+      "explanation": "ভাজক টিস্যু হতে কোষের পূর্ণ বিকাশ লাভের পর বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে স্থায়ী টিস্যুর উদ্ভব ঘটে।",
+      "difficulty": "hard",
+      "pdf_page_number": 235,
+      "source_quote": "ভাজক টিস্যু হতে কোষের পূর্ণ বিকাশ লাভের পর বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে স্থায়ী টিস্যুর উদ্ভব ঘটে।",
+      "practice_related_questions": [],
+      "citations": [
+        {
+          "source_title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+          "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+          "pdf_page_number": 235,
+          "book_page_range": "235-254",
+          "quoted_or_used_text": "ভাজক টিস্যু হতে কোষের পূর্ণ বিকাশ লাভের পর বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে স্থায়ী টিস্যুর উদ্ভব ঘটে।",
+          "retrieved_context_metadata": {
+            "uri": null,
+            "chunk_text": "ভাজক টিস্যু হতে কোষের পূর্ণ বিকাশ লাভের পর বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে স্থায়ী টিস্যুর উদ্ভব ঘটে।",
+            "custom_metadata": null
+          }
+        }
+      ],
+      "grounding_metadata": {
+        "grounding_chunks_used": [
+          {
+            "chunk_index": 1,
+            "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+            "pdf_page_number": null,
+            "book_page_range": "235-254",
+            "text": null,
+            "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f"
+          }
+        ],
+        "grounding_supports": null
+      }
+    }
+  ],
+  "raw_generation_response": {
+    "topic": "Chapter 06 and Chapter 08",
+    "number_of_mcqs": 30,
+    "mcqs": [
+      {
+        "id": 1,
+        "chapter": "Chapter 06",
+        "topic": "Bryophyta Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটা (Bryophyta) কোন ধরনের উদ্ভিদ হিসেবে পরিচিত?",
+        "options": {
+          "A": "জলজ উদ্ভিদ",
+          "B": "স্থলজ উদ্ভিদ",
+          "C": "উভচর উদ্ভিদ",
+          "D": "মরুজ উদ্ভিদ"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "উভচর উদ্ভিদ"
+        },
+        "explanation": "জীবনচক্র ও নিষেকক্রিয়া সম্পন্ন করতে পানির প্রয়োজন হয় বলে ব্রায়োফাইটাকে উভচর উদ্ভিদ বলা হয়।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 2,
+        "chapter": "Chapter 06",
+        "topic": "Bryophyta Nomenclature",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "কে ১৮৬৪ সালে 'ব্রায়োফাইটা' (Bryophyta) নামটি ব্যবহার করেন?",
+        "options": {
+          "A": "মারগুলিস (Margulis)",
+          "B": "ব্রাউন (Braun)",
+          "C": "ওয়ালেস (Wallace)",
+          "D": "স্যান্ডার্স (Sanders)"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "ব্রাউন (Braun)"
+        },
+        "explanation": "বিজ্ঞানী ব্রাউন (Braun) ১৮৬৪ সালে ব্রায়োফাইটা নামটি ব্যবহার করেন।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 3,
+        "chapter": "Chapter 06",
+        "topic": "Bryophyta Plant Body",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটার দেহ কোন দশার উদ্ভিদ?",
+        "options": {
+          "A": "স্পোরোফাইট (Sporophyte)",
+          "B": "গ্যামিটোফাইট (Gametophyte)",
+          "C": "ডিপ্লয়েড (Diploid)",
+          "D": "ভ্রূণীয় দশা"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "গ্যামিটোফাইট (Gametophyte)"
+        },
+        "explanation": "ব্রায়োফাইটার দেহ গ্যামিটোফাইট তথা হ্যাপ্লয়েড।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 4,
+        "chapter": "Chapter 06",
+        "topic": "Bryophyta Species",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "বাংলাদেশে ব্রায়োফাইটার কয়টি প্রজাতি শনাক্ত করা হয়েছে?",
+        "options": {
+          "A": "২৪৮টি",
+          "B": "২৪,০০০টি",
+          "C": "১৫,৬০০টি",
+          "D": "৭৪টি"
+        },
+        "correct_answer": {
+          "option": "A",
+          "text": "২৪৮টি"
+        },
+        "explanation": "বাংলাদেশ থেকে ব্রায়োফাইটা বিভাগের ২৪৮টি প্রজাতি শনাক্ত করা হয়েছে।",
+        "difficulty": "hard"
+      },
+      {
+        "id": 5,
+        "chapter": "Chapter 06",
+        "topic": "Bryophyta Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটার গ্যামিটোফাইট কেমন?",
+        "options": {
+          "A": "পরজীবী",
+          "B": "নির্ভরশীল",
+          "C": "স্বতন্ত্র ও স্বভোজী",
+          "D": "অকোষীয়"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "স্বতন্ত্র ও স্বভোজী"
+        },
+        "explanation": "ব্রায়োফাইটার গ্যামিটোফাইট সর্বদাই স্বতন্ত্র ও স্বভোজী উদ্ভিদ।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 6,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটার উদ্ভিদগুলো কী ধরনের?",
+        "options": {
+          "A": "সপুস্পক",
+          "B": "সবীজী",
+          "C": "অপুষ্পক ও অবীজী",
+          "D": "একবীজপত্রী"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "অপুষ্পক ও অবীজী"
+        },
+        "explanation": "ব্রায়োফাইটা অপুষ্পক ও অবীজী বহুকোষী উদ্ভিদ।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 7,
+        "chapter": "Chapter 06",
+        "topic": "Etymology",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "গ্রিক শব্দ 'Bryon' এর অর্থ কী?",
+        "options": {
+          "A": "উদ্ভিদ",
+          "B": "মস",
+          "C": "মূল",
+          "D": "পাতা"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "মস"
+        },
+        "explanation": "গ্রিক Bryon মানে মস এবং phyton মানে উদ্ভিদ।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 8,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "Wallace, Sanders ও Ferl (১৯৯৬) অনুযায়ী পৃথিবীতে ব্রায়োফাইটস্-এর প্রজাতির সংখ্যা কত?",
+        "options": {
+          "A": "১৫,৬০০",
+          "B": "২৪,০০০",
+          "C": "৭৪",
+          "D": "২৪৮"
+        },
+        "correct_answer": {
+          "option": "A",
+          "text": "১৫,৬০০"
+        },
+        "explanation": "বই অনুযায়ী Wallace, Sanders ও Ferl (১৯৯৬) এর তথ্যমতে প্রজাতির সংখ্যা ১৫,৬০০।",
+        "difficulty": "hard"
+      },
+      {
+        "id": 9,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটস্-এর অধিকাংশই কী ধরনের উদ্ভিদ?",
+        "options": {
+          "A": "জলজ",
+          "B": "স্থলজ",
+          "C": "প্যারাসাইটিক",
+          "D": "এপিফাইট"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "স্থলজ"
+        },
+        "explanation": "ব্রায়োফাইটস্-এর অধিকাংশই স্থলজ প্রজাতি।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 10,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটা একটি বিভাগ হিসেবে গণ্য করা হয় কোন শ্রেণিবিন্যাস অনুযায়ী?",
+        "options": {
+          "A": "প্রচলিত শ্রেণিবিন্যাস",
+          "B": "মারগুলিসের শ্রেণিবিন্যাস",
+          "C": "লিনিয়াসের শ্রেণিবিন্যাস",
+          "D": "বেসীর শ্রেণিবিন্যাস"
+        },
+        "correct_answer": {
+          "option": "A",
+          "text": "প্রচলিত শ্রেণিবিন্যাস"
+        },
+        "explanation": "প্রচলিত শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি বিভাগ।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 11,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "মারগুলিসের (Margulis) শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা কী?",
+        "options": {
+          "A": "শুধুমাত্র বিভাগ",
+          "B": "গ্রেড এবং ফাইলাম",
+          "C": "শুধুমাত্র বর্গ",
+          "D": "গোত্র"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "গ্রেড এবং ফাইলাম"
+        },
+        "explanation": "মারগুলিসের শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি গ্রেড এবং ফাইলাম।",
+        "difficulty": "hard"
+      },
+      {
+        "id": 12,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটসের কতটি গোত্র বাংলাদেশে পাওয়া গেছে?",
+        "options": {
+          "A": "২৪৮",
+          "B": "৭৪",
+          "C": "৩৪",
+          "D": "১৫"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "৩৪"
+        },
+        "explanation": "বাংলাদেশে এ বিভাগের অন্তর্গত ৩৪টি গোত্র শনাক্ত হয়েছে।",
+        "difficulty": "hard"
+      },
+      {
+        "id": 13,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "ব্রায়োফাইটসে কয়টি গণ বাংলাদেশে শনাক্ত করা হয়েছে?",
+        "options": {
+          "A": "৩৪",
+          "B": "৭৪",
+          "C": "২৪৮",
+          "D": "১৫"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "৭৪"
+        },
+        "explanation": "বাংলাদেশে ব্রায়োফাইটার ৭৪টি গণ শনাক্ত করা হয়েছে।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 14,
+        "chapter": "Chapter 06",
+        "topic": "General Characteristics",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "সব ব্রায়োফাইটার সাধারণ বৈশিষ্ট্য কোনটি?",
+        "options": {
+          "A": "সবগুলো একবীজপত্রী",
+          "B": "সবগুলো বহুকোষী",
+          "C": "সবগুলো সপুষ্পক",
+          "D": "সবগুলো জলজ"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "সবগুলো বহুকোষী"
+        },
+        "explanation": "ব্রায়োফাইটার সব প্রজাতি বহুকোষী।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 15,
+        "chapter": "Chapter 06",
+        "topic": "Terminology",
+        "source_file": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "book_page_range": "198",
+        "question": "Bryophyta বর্গের উদ্ভিদকে কী বলা হয়?",
+        "options": {
+          "A": "টেরিডোফাইটস",
+          "B": "ব্রায়োফাইটস্ (Bryophytes)",
+          "C": "মস উদ্ভিদ",
+          "D": "অপুষ্পক উদ্ভিদ"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "ব্রায়োফাইটস্ (Bryophytes)"
+        },
+        "explanation": "Bryophyta বর্গের উদ্ভিদকে Bryophytes বলে।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 16,
+        "chapter": "Chapter 08",
+        "topic": "Definition",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "একই উৎস থেকে সৃষ্ট সমধর্মী অবিচ্ছিন্ন কোষগুচ্ছকে কী বলে?",
+        "options": {
+          "A": "কোষ (Cell)",
+          "B": "অঙ্গ (Organ)",
+          "C": "টিস্যু (Tissue)",
+          "D": "তন্ত্র (System)"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "টিস্যু (Tissue)"
+        },
+        "explanation": "একই উৎস থেকে সৃষ্ট, একই ধরনের কাজ সম্পন্নকারী সমধর্মী একটি অবিচ্ছিন্ন কোষগুচ্ছকে টিস্যু বা কোষকলা বলে।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 17,
+        "chapter": "Chapter 08",
+        "topic": "Classification",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "কোষের বিভাজন ক্ষমতা অনুযায়ী উদ্ভিদ টিস্যু প্রধানত কত প্রকার?",
+        "options": {
+          "A": "দুই প্রকার",
+          "B": "তিন প্রকার",
+          "C": "চার প্রকার",
+          "D": "পাঁচ প্রকার"
+        },
+        "correct_answer": {
+          "option": "A",
+          "text": "দুই প্রকার"
+        },
+        "explanation": "সব ধরনের টিস্যুকে কোষের বিভাজন অনুযায়ী ভাজক টিস্যু ও স্থায়ী টিস্যু এই দুই ভাগে ভাগ করা যায়।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 18,
+        "chapter": "Chapter 08",
+        "topic": "Meristematic Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "ভাজক টিস্যুর অপর নাম কী?",
+        "options": {
+          "A": "স্থায়ী টিস্যু",
+          "B": "মেরিস্টেম (Meristem)",
+          "C": "জটিল টিস্যু",
+          "D": "সরল টিস্যু"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "মেরিস্টেম (Meristem)"
+        },
+        "explanation": "ভাজক টিস্যুর অপর নাম মেরিস্টেম।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 19,
+        "chapter": "Chapter 08",
+        "topic": "Permanent Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু কত প্রকার?",
+        "options": {
+          "A": "দুই",
+          "B": "তিন",
+          "C": "চার",
+          "D": "পাঁচ"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "তিন"
+        },
+        "explanation": "গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু তিন প্রকার: সরল, জটিল ও ক্ষরণকারী টিস্যু।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 20,
+        "chapter": "Chapter 08",
+        "topic": "Meristematic Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "ভাজক টিস্যুর কোষ প্রাচীর কী দ্বারা গঠিত?",
+        "options": {
+          "A": "লিগনিন",
+          "B": "সুবেরিন",
+          "C": "সেলুলোজ",
+          "D": "কিউটিন"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "সেলুলোজ"
+        },
+        "explanation": "ভাজক টিস্যুর কোষগুলো সেলুলোজ নির্মিত পাতলা কোষপ্রাচীর বিশিষ্ট হয়।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 21,
+        "chapter": "Chapter 08",
+        "topic": "Complex Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "জটিল টিস্যু প্রধানত কত প্রকার?",
+        "options": {
+          "A": "এক",
+          "B": "দুই",
+          "C": "তিন",
+          "D": "চার"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "দুই"
+        },
+        "explanation": "জটিল টিস্যু প্রধানত দুই প্রকার: জাইলেম ও ফ্লোয়েম।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 22,
+        "chapter": "Chapter 08",
+        "topic": "Secretory Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "ক্ষরণকারী টিস্যু কত প্রকার?",
+        "options": {
+          "A": "দুই",
+          "B": "তিন",
+          "C": "চার",
+          "D": "পাঁচ"
+        },
+        "correct_answer": {
+          "option": "A",
+          "text": "দুই"
+        },
+        "explanation": "ক্ষরণকারী বা নিঃস্রাবী টিস্যু দুই প্রকার: তরুক্ষীর টিস্যু ও গ্রন্থি টিস্যু।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 23,
+        "chapter": "Chapter 08",
+        "topic": "Tissue Function",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "জাইলেম ও ফ্লোয়েম টিস্যু একত্রে কী গঠন করে?",
+        "options": {
+          "A": "সরল টিস্যু",
+          "B": "পরিবহনতন্ত্র",
+          "C": "এপিডার্মাল টিস্যুতন্ত্র",
+          "D": "গ্রাউন্ড টিস্যুতন্ত্র"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "পরিবহনতন্ত্র"
+        },
+        "explanation": "জাইলেম ও ফ্লোয়েম টিস্যু একত্রে পরিবহনতন্ত্র গঠন করে।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 24,
+        "chapter": "Chapter 08",
+        "topic": "Permanent Tissue Characteristics",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "স্থায়ী টিস্যুর মৃত কোষে কী থাকে না?",
+        "options": {
+          "A": "কোষ প্রাচীর",
+          "B": "প্রোটোপ্লাজম",
+          "C": "সেলুলোজ",
+          "D": "নিউক্লিয়াস"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "প্রোটোপ্লাজম"
+        },
+        "explanation": "মৃত কোষে প্রোটোপ্লাজমবিহীন থাকে।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 25,
+        "chapter": "Chapter 08",
+        "topic": "Meristematic Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "ভাজক টিস্যুর কোষগুলো সাধারণত কী ধরনের আকৃতির হয়?",
+        "options": {
+          "A": "গোল",
+          "B": "ত্রিভুজাকার",
+          "C": "আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার",
+          "D": "তারাকৃতি"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার"
+        },
+        "explanation": "ভাজক টিস্যুর কোষগুলো সাধারণত আয়তাকার, ডিম্বাকার, পঞ্চভুজ বা ষড়ভুজাকার হয়।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 26,
+        "chapter": "Chapter 08",
+        "topic": "Tissue System",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "পাতার প্রধান কাজ কী?",
+        "options": {
+          "A": "পানি পরিশোষণ",
+          "B": "খাদ্য তৈরি",
+          "C": "মাটির সাথে ধরে রাখা",
+          "D": "ফুল ফোটানো"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "খাদ্য তৈরি"
+        },
+        "explanation": "পাতার কাজ খাদ্য তৈরি করা।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 27,
+        "chapter": "Chapter 08",
+        "topic": "Tissue Characteristics",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "স্থায়ী টিস্যুর নিউক্লিয়াস কেমন হয়?",
+        "options": {
+          "A": "স্বাভাবিকের চেয়ে বড়",
+          "B": "স্বাভাবিকের চেয়ে ছোট",
+          "C": "অনেকগুলো নিউক্লিয়াস থাকে",
+          "D": "নিউক্লিয়াস থাকে না"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "স্বাভাবিকের চেয়ে ছোট"
+        },
+        "explanation": "স্থায়ী টিস্যুর নিউক্লিয়াস স্বাভাবিকের চেয়ে ছোট এবং কোষের এক পাশে অবস্থান করে।",
+        "difficulty": "medium"
+      },
+      {
+        "id": 28,
+        "chapter": "Chapter 08",
+        "topic": "Secretory Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "তরুক্ষীর টিস্যু কোন ধরনের টিস্যুর অন্তর্ভুক্ত?",
+        "options": {
+          "A": "সরল টিস্যু",
+          "B": "জটিল টিস্যু",
+          "C": "ক্ষরণকারী বা নিঃস্রাবী টিস্যু",
+          "D": "ভাজক টিস্যু"
+        },
+        "correct_answer": {
+          "option": "C",
+          "text": "ক্ষরণকারী বা নিঃস্রাবী টিস্যু"
+        },
+        "explanation": "তরুক্ষীর টিস্যু ক্ষরণকারী বা নিঃস্রাবী টিস্যু এর অন্তর্ভুক্ত।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 29,
+        "chapter": "Chapter 08",
+        "topic": "Simple Tissue",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "সরল স্থায়ী টিস্যু কত প্রকার?",
+        "options": {
+          "A": "দুই",
+          "B": "তিন",
+          "C": "চার",
+          "D": "পাঁচ"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "তিন"
+        },
+        "explanation": "সরল স্থায়ী টিস্যু তিন প্রকার: প্যারেনকাইমা, কোলেনকাইমা এবং স্ক্লেরেনকাইমা।",
+        "difficulty": "easy"
+      },
+      {
+        "id": 30,
+        "chapter": "Chapter 08",
+        "topic": "Tissue Formation",
+        "source_file": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "book_page_range": "235",
+        "question": "স্থায়ী টিস্যুর উদ্ভব কীভাবে ঘটে?",
+        "options": {
+          "A": "ভাজক টিস্যুর কোষের ক্রমাগত বিভাজনে",
+          "B": "ভাজক টিস্যুর কোষের বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে",
+          "C": "কোষের মৃত হওয়ার মাধ্যমে",
+          "D": "কোষের আয়তন বৃদ্ধির মাধ্যমে"
+        },
+        "correct_answer": {
+          "option": "B",
+          "text": "ভাজক টিস্যুর কোষের বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে"
+        },
+        "explanation": "ভাজক টিস্যু হতে কোষের পূর্ণ বিকাশ লাভের পর বিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে স্থায়ী টিস্যুর উদ্ভব ঘটে।",
+        "difficulty": "hard"
+      }
+    ]
+  },
+  "response_grounding_metadata": {
+    "grounding_chunks": [
+      {
+        "chunk_index": 0,
+        "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": null,
+        "uri": null,
+        "text": null,
+        "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::32b19bf6e5776d86:000001e54a7018bc:000651869004f1df",
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 1,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": null,
+        "uri": null,
+        "text": null,
+        "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::1868c4f905f96b6e:000001e54a7018bc:0006518691fd1b4f",
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 2,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": 20,
+        "uri": null,
+        "text": "সম্পন্ন করে। কাজ, অবস্থান ও গঠন প্রকৃতি অনুযায়ী জটিল টিস্যু প্রধানত দু'প্রকার। যথা (ক) জাইলেম টিস্যু এবং\n(খ) ফ্লোয়েম টিস্যু। এ দু'প্রকার টিস্যু একত্রে পরিবহনতন্ত্র গঠন করে। এ টিস্যু মূল থেকে পাতা পর্যন্ত বিস্তৃত। খাদ্যদ্রব্য ও পানি\nপরিবহন করাই এ টিস্যুর প্রধান কাজ।\n(৩) ক্ষরণকারী বা নিঃস্রাবী টিস্যু (Secretory tissue): যে টিস্যু হতে নানা প্রকার তরল পদার্থ (উৎসেচক, বর্জ্য পদার্থ =\nরেজিন, গদ, উদ্বায়ী তেল, আঠা ইত্যাদি) নিঃসৃত হয়ে থাকে, তাকে ক্ষরণকারী বা নিঃস্রাবী টিস্যু বলে। ক্ষরণকারী টিস্যু দু'প্রকার।\nযথা: (i) তরুক্ষীর টিস্যু (laticiferous tissue) এবং (ii) গ্রন্থি টিস্যু (glandular tissue) \nস্থায়ী টিস্যুর প্রকারভেদ\n↓\n√\nV\nসরল টিস্যু\nজটিল বা যৌগিক টিস্যু\n১। প্যারেনকাইমা\n১। জাইলেম\nক্ষরণকারী বা নিঃস্রাবী টিস্যু\n১। তরুক্ষীর টিস্যু\n২। কোলেনকাইমা\n২। ফ্লোয়েম\n২। গ্রন্থি টিস্যু\n৩। স্ক্লেরেনকাইমা\n\n",
+        "media_id": null,
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 3,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": 20,
+        "uri": null,
+        "text": "স্থায়িত্ব লাভ করেছে, তাই\nএরা স্থায়ী টিস্যু। বিশেষ অবস্থা ছাড়া এরা আর বিভাজিত হতে পারে না। ভাজক টিস্যু হতে কোষের পূর্ণ বিকাশ লাভের পর\nবিভাজন ক্ষমতা স্থগিত হওয়ার মাধ্যমে স্থায়ী টিস্যুর উদ্ভব ঘটে।\nস্থায়ী টিস্যুর বৈশিষ্ট্য\n(i) স্থায়ী টিস্যুর কোষগুলো সাধারণত বিভাজনে অক্ষম।\n(iii) জীবিত কোষে সাইটোপ্লাজম স্বাভাবিকের চেয়ে কম।\n(v) কোষগুলোর প্রাচীর অপেক্ষাকৃত স্কুল। অর্থাৎ বেশ পুরু।\n(vii) নিউক্লিয়াস স্বাভাবিকের চেয়ে ছোট এবং কোষের এক\nপাশে অবস্থান করে।\nস্থায়ী টিস্যুর কাজ:\n(i) খাদ্য তৈরি।\n(iii) পানি ও খাদ্য সঞ্চয়।\n(ii) পানি ও খাদ্য পরিবহন।\n(iv) দৃঢ়তা প্রদান।\n(ii) টিস্যুতে দু'রকম কোষ থাকে-জীবিত ও মৃত।\n(iv) মৃত কোষ প্রোটোপ্লাজমবিহীন।\n(vi) কোষ গহ্বর অপেক্ষাকৃত বড়\n(viii) কোষ প্রাচীরে নানা নকশা দেখা যায়।\nস্থায়ী টিস্যুর শ্রেণিবিভাগ: গঠন ও কাজের ভিত্তিতে স্থায়ী টিস্যু তিন প্রকার যথা: (১) সরল টিস্যু (simple tissue).\n(২) জটিল বা যৌগিক টিস্যু (complex tissue) এবং (৩) ক্ষরণকারী বা নিঃস্রাবী টিস্যু (secretory tissue) |\n(১) সরল টিস্যু (Simple tissue): সরল স্থায়ী টিস্যুর সবগুলো কোষ আকার, আকৃতি ও গঠন বৈশিষ্ট্যে একই ধরনের হয়।\nকোষের আকৃতি ও প্রকৃতির উপর নির্ভর করে সরল টিস্যুকে তিন ভাগে ভাগ করা হয়েছে; যথা: ( ) প্যারেনকাইমা, ( \nকোলেনকাইমা এবং (iii) স্ক্লেরেনকাইমা\n(২) জটিল টিস্যু (Complex tissue): জটিল স্থায়ী টিস্যু একাধিক প্রকার কোষ দিয়ে গঠিত এবং সম্মিলিতভাবে একই\nধরনের কাজ সম্পন্ন করে। কাজ, অবস্থান ও গঠন প্রকৃতি অনুযায়ী জটিল টিস্যু প্রধানত দু'প্রকার। যথা (ক) জাইলেম টিস্যু এবং\n(খ) ফ্লোয়েম টিস্যু। এ",
+        "media_id": null,
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 4,
+        "title": "chapter_06_bryophyta_and_pteridophyta_pages_198-208.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": 11,
+        "uri": null,
+        "text": "শনাক্ত করতে পারবে।\nব্রায়োফাইটা (Bryophyta) বা মসবর্গীয় উদ্ভিদ\n(Gk. Bryon = মস এবং phyton = উদ্ভিদ)\nপ্রচলিত শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি বিভাগ। Margulis এর শ্রেণিবিন্যাস অনুযায়ী ব্রায়োফাইটা একটি\nগ্রেড এবং ফাইলাম (বিভাগ)। Wallace, Sanders ও Ferl-এর Biology (১৯৯৬) অনুয়ায়ী ব্রায়োফাইট্স-এর প্রজাতির\nসংখ্যা ১৫,৬০০ যার অধিকাংশই স্থলজ, কিছু জলজ। স্থলজ প্রজাতিগুলোরও জীবনচক্র, বিশেষ করে নিষেকক্রিয়া সম্পন্ন\nকরতে পানির প্রয়োজন হয়। তাই ব্রায়োফাইটা উভচর উদ্ভিদ হিসেবে পরিচিত। বিজ্ঞানী ব্রাউন (Braun) ১৮৬৪ সালে\nব্রায়োফাইটা নামটি ব্যবহার করেন। Bryophyta বর্গের উদ্ভিদকে Bryophytes (ব্রায়োফাইট্স) বলে। এ বিভাগে প্রায়\n২৪,০০০ প্রজাতি আছে। বাংলাদেশ থেকে এ বিভাগের অন্তর্গত ৩৪টি গোত্রের ৭৪টি গণের ২৪৮টি প্রজাতি শনাক্ত করা\nহয়েছে। ব্রায়োফাইটার সব প্রজাতিতে নিম্নলিখিত সাধারণ বৈশিষ্ট্য বিদ্যমান।\nব্রায়োফাইটার বৈশিষ্ট্য (Characteristics of Bryophyta)\n১। এরা বহুকোষী উদ্ভিদ। এরা অপুষ্পক ও অবীজী।\n২। এদের দেহ গ্যামিটোফাইট (gametophyte) তথা হ্যাপ্লয়েড। গ্যামিটোফাইট সর্বদাই স্বতন্ত্র ও স্বভোজী উদ্ভিদ।\n\n",
+        "media_id": null,
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 5,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": 19,
+        "uri": null,
+        "text": "প্রকার বিভাজনের ফলে একসারি কোষ সৃষ্টি হয়; যেমন- বর্ধিষ্ণু মূল ও কাণ্ডের মজ্জা রশ্মি।\n৪। কাজ অনুসারে: কর্মপ্রক্রিয়া অনুসারে ভাজক টিস্যুকে নিম্নলিখিত তিন ভাগে ভাগ করা হয়:\n(ক) প্রোটোডার্ম (Protoderm): যে ভাজক টিস্যুর কোষসমূহ উদ্ভিদদেহের ত্বক সৃষ্টি করে তাকে প্রোটোডার্ম বলে।\n মূল, কাণ্ড ও এদের শাখা-প্রশাখার ত্বক (এপিডার্মিস বা এপিব্লেমা) সৃষ্টি করা হলো প্রোটোডার্ম-এর কাজ।\n(খ) প্রোক্যাম্বিয়াম (Procambium): ক্যাম্বিয়াম, জাইলেম ও ফ্লোয়েম সৃষ্টিকারী ভাজক টিস্যুকে প্রোক্যাম্বিয়াম বলে।\nপরিবহন টিস্যু সৃষ্টি করাই প্রোক্যাম্বিয়ামের কাজ।\n(গ) গ্রাউন্ড মেরিস্টেম (Ground meristem): শীর্ষস্থ ভাজক টিস্যুর যে অংশ বারবার বিভাজিত হয়ে উদ্ভিদ দেহের\nমূল ভিত্তি তথা কর্টেক্স, মজ্জা ও মজ্জা রশ্মি সৃষ্টি করে তাকে গ্রাউন্ড মেরিস্টেম বলে।\nউৎপত্তি\nঅনুসারে\n১। প্রারম্ভিক ভাজক টিস্যু\n২। প্রাইমারি ভাজক টিস্যু\n৩। সেকেন্ডারি ভাজক টিস্যু\nভাজক টিস্যুর প্রকারভেদ\n↑\nঅবস্থান\nঅনুসারে\nকোষ বিভাজন\nঅনুসারে\nকাজ\nঅনুসারে\n১। শীর্ষক ভাজক টিস্যু\n২। ইন্টারক্যালারি বা\nনিবেশিত ভাজক টিস্যু\n৩। পার্শ্বীয় ভাজক টিস্যু\n১। মাস ভাজক টিস্যু\n২। প্লেট ভাজক টিস্যু\n৩। রিব ভাজক টিস্যু\n১। প্রোটোডার্ম\n২। প্রোক্যাম্বিয়াম\n৩। গ্রাউন্ড মেরিস্টেম\n\n২৩৮\nজীববিজ্ঞান-প্রথম পত্র\nশীর্ষস্থ ভাজক টিস্যু বা এপিক্যাল মেরিস্টেম সব টিস্যুর উৎস\nপ্রোটোডার্ম\nগ্রাউন্ড মেরিস্টেম\nপ্রোক্যাম্বিয়াম\nপ্রাথমিক\nটিস্যু\nডার্মাল টিস্যু\nগ্রাউন্ড, টিস্যু\nভাস্কুলার টিস্যু\nএপিডার্মিস\nকোলেনকাইমা,\nক্লেরেনকাইমা,\nজাইলেম রেসিডুয়্যাল ফ্লোয়েম\nআচ্ছাদনকারী কোষ, স্টোম্যাটা,\nপ্যারেনকাইমা\nপ্রোক্যাম্বিয়াম\nকাগুরোম, মূলরোম, পত্ররোম\nইত্যাদি\nভাস্কুলার ক্যাম্বিয়াম\nসেকেন্ডারি\nটিস্যু\nকর্ক-ক্যাম্বিয়াম,\nসেকেন্ডারি জাইলেম\nকর্ক\nসেকেন্ডারি ফ্লোয়েম\n২। স্থায়ী টিস্যু (Permanent tissue): যে টিস্যুর কোষগুলো বিভাজনে অক্ষম সে টিস্যুকে স্থায়ী টিস্যু বলে। এ টিস্যুর\nকোষগুলো পূর্ণভাবে বিকশিত এবং সঠিক আকার-আকৃতিবিশিষ্ট অর্থাৎ এরা আকার-আকৃতি ও বিকাশে স্থায়িত্ব লাভ করেছে, তাই\nএরা স্থায়ী টিস্যু। বিশেষ অবস্থা ছাড়া এরা আর বিভাজিত হতে পারে না। ভাজক টিস্যু হতে কোষের পূর্ণ",
+        "media_id": null,
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 6,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": null,
+        "uri": null,
+        "text": null,
+        "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::cd1cfbce57caa2c1:000001e54a7018bc:0006518691fcdc8f",
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 7,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": 17,
+        "uri": null,
+        "text": "শ্রমবিভাগ।\nএ অধ্যায় পাঠ শেষে শিক্ষার্থীরা-\n১. ভাজক টিস্যু সম্পর্কে বর্ণনা করতে পারবে।\n২. এপিডার্মাল, গ্রাউন্ড ও ভাস্কুলার টিস্যুতন্ত্রের অবস্থান, গঠন ও কাজ বর্ণনা করতে পারবে।\n৩. টিস্যুতন্ত্রের চিত্র অঙ্কন করে চিহ্নিত করতে পারবে।\n৪. একবীজপত্রী উদ্ভিদের মূল ও কাণ্ডের চিত্র অঙ্কন করে চিহ্নিত করতে পারবে।\n৫. ব্যবহারিক\n০ একবীজপত্রী উদ্ভিদের মূল ও কাণ্ড প্রস্থচ্ছেদ করে শনাক্ত করতে পারবে।\nটিস্যুর প্রকারভেদ\nসাধারণত একটি উদ্ভিদে বিভিন্ন ধরনের টিস্যু থাকে। তবে সব ধরনের টিস্যুকে, টিস্যু গঠনকারী কোষের বিভাজন\nঅনুযায়ী দু'টি ভাগে ভাগ করা যায়; যথা-১। ভাজক টিস্যু এবং ২। স্থায়ী টিস্যু। নিচে এ সম্বন্ধে একটু বিস্তারিত আলোচনা\nকরা হলো।\n১। ভাজক টিস্যু (Meristematic tissue): তোমরা নিশ্চয়ই লক্ষ্য করেছ কোনো একটি উদ্ভিদের চারা ক্রমেই বৃদ্ধি\nপেয়ে লম্বা হচ্ছে, আবার এর গোড়াটিও ধীরে ধীরে মোটা হচ্ছে। কী কারণে এবং কীভাবে গাছটি ক্রমান্বয়ে উঁচু ও মোটা\nহচ্ছে তা ভেবে দেখেছ কি? গাছের কোনো কোনো বিশেষ স্থানে অবস্থিত (যেমন কাণ্ড শীর্ষ, মূল শীর্ষ ইত্যাদি) কোষগুচ্ছ\nবিরামহীনভাবে বিভাজিত হয়েই চলেছে। কোষের ক্রমাগত বিভাজনই এই বৃদ্ধির কারণ। যে কোষগুলো বিভাজিত হয় তা\nহলো ভাজক কোষ, আর ভাজক কোষ দিয়ে গঠিত টিস্যুই ভাজক টিস্যু। ভাজক টিস্যুর অপর নাম মেরিস্টেম।\nভাজক টিস্যুর বৈশিষ্ট্য\n(i)\nকোষগুলো জীবিত, অপেক্ষাকৃত ছোট\nএবং সমব্যাসীয়।\nপাতলা কোষ প্রাচীর ঘন সাইটোপ্লাজম\nনিউক্লিয়াস\n(ii) ভাজক টিস্যুর কোষগুলো সর্বদাই\nবিভাজন ক্ষমতাসম্পন্ন।\n(iii) ভাজক টিস্যুর কোষগুলো সাধারণত\nআয়তাকার, ডিম্বাকার, পঞ্চভুজ বা\nষড়ভুজাকার হয়।\n(iv) এই টিস্যুর কোষগুলো সেলুলোজ\nনির্মিত পাতলা কোষপ্রাচীর বিশিষ্ট হয়।\n(v) কোষের নিউক্লিয়াস অপেক্ষাকৃত বড়\nআকারের এবং",
+        "media_id": null,
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 8,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": null,
+        "uri": null,
+        "text": null,
+        "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::338a930231a7d949:000001e54a7018bc:0006518691fd9e0f",
+        "custom_metadata": null
+      },
+      {
+        "chunk_index": 9,
+        "title": "chapter_08_tissue_and_tissue_system_pages_235-254.pdf",
+        "file_search_store": "fileSearchStores/biologyhasansir-gpfkrj76vjfg",
+        "pdf_page_number": null,
+        "uri": null,
+        "text": null,
+        "media_id": "fileSearchStores/biologyhasansir-gpfkrj76vjfg/media/genai-api/blobref/global::000050ecbb30026d:000003d3:2:000050ecbb30026d:0000000000000001::f15e45369a5c6ba8:000001e54a7018bc:0006518691fd9e7f",
+        "custom_metadata": null
+      }
+    ],
+    "grounding_supports": null
+  }
+}

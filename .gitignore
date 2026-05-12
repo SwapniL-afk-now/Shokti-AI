@@ -1,0 +1,17 @@
+# Claude
+.claude/
+
+# Environment
+.env
+
+# Generated knowledge graph
+graphify-out/
+
+# Virtual environment
+.venv/
+__pycache__/
+*.pyc
+
+# Large source PDFs (available separately)
+books/**
+!books/chapters/
