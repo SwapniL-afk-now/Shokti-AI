@@ -1,6 +1,6 @@
 # Question Insight v2
 
-Analyzes medical and university admission exam question papers against a structured syllabus tree — showing which topics appear most, by year and subject.
+Analyzes medical and university admission exam question papers against a structured syllabus tree — showing which topics appear most, by year and subject. Supports semantic search over topics using RAG embeddings.
 
 ## How it works
 
@@ -8,15 +8,18 @@ Analyzes medical and university admission exam question papers against a structu
 Textbook PDF  →  01  →  Syllabus Tree
 Question PDF  →  02  →  Question Bank
                  03  →  Mapped Questions  →  Web Viewer
+Syllabus Tree →  04  →  Node Embeddings  →  RAG Search
 ```
 
-**Script 01** reads a textbook PDF and asks Gemini to build a hierarchical syllabus tree (Subject → Paper → Chapter → Section → Topic).
-
-**Script 02** extracts every MCQ, written, or mixed question from an exam PDF, page by page, with validation and checkpointing.
-
-**Script 03** maps each question to the closest node(s) in the syllabus tree using a two-pass LLM approach.
-
-**app.py** serves an interactive tree viewer with heatmap and year/subject trend charts.
+| Script | What it does |
+|--------|-------------|
+| `01_generate_tree_from_book.py` | Reads a textbook PDF and asks Gemini to build a hierarchical syllabus tree (Subject → Paper → Chapter → Section → Topic) |
+| `02_extract_question_bank.py` | Extracts every question from an exam PDF page by page, with per-page validation and checkpointing |
+| `03_map_questions_to_tree.py` | Maps each question to the closest syllabus node(s) using a two-pass LLM approach, with checkpoint/resume |
+| `04_create_embeddings.py` | Generates Gemini embeddings for every node summary; incremental — only re-embeds changed nodes |
+| `app.py` | FastAPI web viewer with tree, heatmap, and year/subject trend charts |
+| `rag.py` | Importable module for semantic node search and question retrieval |
+| `example_extract_questions.py` | Example RAG queries: find exam questions by topic description |
 
 ## Setup
 
@@ -34,31 +37,98 @@ GEMINI_MODEL=gemini-2.5-pro
 
 ## Usage
 
+### Step 1 — Generate syllabus tree from a textbook
+
+Run once per textbook. Merges into `data/syllabus_tree.json`.
+
 ```bash
-# 1. Generate syllabus tree from a textbook
 python 01_generate_tree_from_book.py \
   --book books/biology_1st.pdf \
   --subject Biology \
   --paper "1st Paper" \
   --university "Medical/MBBS Admission"
+```
 
-# 2. Extract questions from an exam paper
+Optional: `--password` for encrypted PDFs, `--language`, `--class-level`, `--out`.
+
+### Step 2 — Extract questions from an exam paper
+
+```bash
+# MCQ paper (default)
 python 02_extract_question_bank.py \
   --pdf question_pdfs/exam.pdf \
   --mode yearwise \
   --year 2023 \
   --exam-name "Medical Admission" \
-  --question-type mcq        # mcq | written | mixed
+  --question-type mcq
 
-# 3. Map questions to the syllabus tree
+# Written or mixed paper
+python 02_extract_question_bank.py \
+  --pdf question_pdfs/du_2023.pdf \
+  --mode yearwise \
+  --year 2023 \
+  --exam-name "DU Unit-A" \
+  --question-type written   # mcq | written | mixed
+```
+
+Extraction modes: `yearwise` (one exam per year), `chapterwise`, `random`.  
+Progress is saved after every page — safe to interrupt and resume.  
+Output: `data/question_bank.json`.
+
+### Step 3 — Map questions to the syllabus tree
+
+```bash
+python 03_map_questions_to_tree.py
+
+# With --allow-new-nodes to handle English/GK not in the tree
 python 03_map_questions_to_tree.py --allow-new-nodes
+```
 
-# 4. Run the viewer
+Checkpointed after every question — safe to interrupt and resume.  
+Output: `data/mapped_questions.json`.
+
+### Step 4 — Build node embeddings (for RAG search)
+
+```bash
+python 04_create_embeddings.py
+```
+
+Only re-embeds nodes whose summary has changed since the last run.  
+Uses `gemini-embedding-2` at 768 dimensions.  
+Output: `data/node_embeddings.json`.
+
+### Run the web viewer
+
+```bash
 uvicorn app:app --reload
 # open http://localhost:8000
 ```
 
-Password-protected PDFs are supported via `--password`.
+### RAG search
+
+```bash
+# Run the bundled examples
+python example_extract_questions.py
+```
+
+Or use `rag.py` directly in your own code:
+
+```python
+from rag import search_questions
+
+result = search_questions(
+    query="photosynthesis light reaction and dark reaction",
+    top_k_nodes=5,
+    min_score=0.5,
+    include_subtree=True,
+)
+
+for node in result["matched_nodes"]:
+    print(f"[{node['score']:.3f}] {node['path']}")
+
+for q in result["questions"]:
+    print(q["stem"])
+```
 
 ## Supported universities / exam types
 
@@ -66,12 +136,25 @@ Password-protected PDFs are supported via `--password`.
 |------|------|---------------|
 | Medical / MBBS | yearwise | mcq |
 | BUET | yearwise | mcq or mixed |
-| DU Unit-A | yearwise | written |
+| DU (written units) | yearwise | written |
 | Chapterwise banks | chapterwise | mcq |
+| Any university | random | mcq |
 
 ## Stack
 
 - **LLM** — Google Gemini 2.5 Pro (`google-genai`)
+- **Embeddings** — Gemini Embedding 2 (`gemini-embedding-2`, 768-dim)
 - **PDF processing** — PyMuPDF
 - **API** — FastAPI + uvicorn
 - **Frontend** — Vanilla JS + Chart.js
+- **Numerics** — NumPy (cosine similarity)
+
+## Data files
+
+| File | Description |
+|------|-------------|
+| `data/syllabus_tree.json` | Master syllabus tree (all subjects merged) |
+| `data/question_bank.json` | Extracted questions |
+| `data/mapped_questions.json` | Questions with `mapping.node_ids` filled |
+| `data/node_embeddings.json` | Gemini embedding vectors per node |
+| `data/extraction_checkpoints/` | Per-page extraction progress (resumable) |

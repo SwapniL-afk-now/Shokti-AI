@@ -4,3 +4,4 @@ pymupdf
 tqdm
 fastapi
 uvicorn
+numpy
