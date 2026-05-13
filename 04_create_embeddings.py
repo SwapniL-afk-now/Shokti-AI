@@ -42,13 +42,16 @@ def text_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
-def build_node_text(node: Dict[str, Any], path: str) -> str:
-    """Build the text that will be embedded for a node.
+EMBED_INSTRUCTION = "Represent this syllabus topic:"
 
-    gemini-embedding-2 does not use task_type; instead the instruction is
-    embedded directly in the text.
+
+def build_node_content(node: Dict[str, Any], path: str) -> str:
+    """Canonical node content — used for change detection (hashing).
+
+    The instruction prefix is intentionally excluded so that changing
+    the prefix does not invalidate every stored hash.
     """
-    parts = ["Represent this syllabus topic:", path, node.get("name", ""), node.get("summary", "")]
+    parts = [path, node.get("name", ""), node.get("summary", "")]
 
     aliases = [a for a in (node.get("aliases") or []) if a]
     if aliases:
@@ -76,11 +79,13 @@ def flatten_nodes(
 
     node_id = node.get("id")
     if node_id:
+        content = build_node_content(node, path_str)
         result.append({
             "id": node_id,
             "name": node.get("name", ""),
             "path": path_str,
-            "text": build_node_text(node, path_str),
+            "content": content,                          # hashed for change detection
+            "text": f"{EMBED_INSTRUCTION} {content}",   # sent to the embedding API
         })
 
     for child in node.get("children", []):
@@ -131,7 +136,7 @@ def main():
     # Determine which nodes need (re-)embedding based on text hash.
     to_embed = []
     for node in all_nodes:
-        h = text_hash(node["text"])
+        h = text_hash(node["content"])  # hash content only, not the instruction prefix
         if not args.force and node["id"] in stored and stored[node["id"]].get("text_hash") == h:
             continue
         to_embed.append({**node, "text_hash": h})

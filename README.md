@@ -93,9 +93,25 @@ Output: `data/mapped_questions.json`.
 python 04_create_embeddings.py
 ```
 
-Only re-embeds nodes whose summary has changed since the last run.  
 Uses `gemini-embedding-2` at 768 dimensions.  
 Output: `data/node_embeddings.json`.
+
+**Incremental updates** — the script hashes each node's content and skips nodes that haven't changed. So adding new books and re-running only embeds the new nodes:
+
+```bash
+# Add two new books
+python 01_generate_tree_from_book.py --book books/math.pdf --subject Mathematics --paper "1st Paper" --university BUET
+python 01_generate_tree_from_book.py --book books/physics_2nd.pdf --subject Physics --paper "2nd Paper" --university BUET
+
+# Only the new nodes get embedded — existing ones are skipped
+python 04_create_embeddings.py
+```
+
+Use `--force` to re-embed everything (e.g. after switching embedding models):
+
+```bash
+python 04_create_embeddings.py --force
+```
 
 ### Run the web viewer
 
