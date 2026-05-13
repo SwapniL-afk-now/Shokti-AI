@@ -1,0 +1,19 @@
+# Secrets
+.env
+
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Large PDF source files (re-add manually if needed)
+books/
+question_pdfs/
+
+# Old data directory
+data_old/
+
+# OS
+.DS_Store

@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Syllabus Tree Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f7f7f4;
+      --panel: #ffffff;
+      --text: #1f2933;
+      --muted: #64748b;
+      --line: #d8ded8;
+      --accent: #1f7a5a;
+      --accent-soft: #e4f3ec;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    h1 { margin: 0; font-size: 17px; font-weight: 700; white-space: nowrap; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    #search {
+      width: 200px; height: 32px;
+      border: 1px solid var(--line); border-radius: 6px;
+      padding: 0 10px; font-size: 13px; background: #fff;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 2px;
+      background: var(--bg); border: 1px solid var(--line);
+      border-radius: 7px; padding: 3px;
+    }
+    .tab-btn {
+      height: 28px; border: none; border-radius: 5px;
+      background: transparent; color: var(--muted);
+      padding: 0 13px; font-size: 13px; cursor: pointer; font-weight: 500;
+    }
+    .tab-btn:hover { background: #eef2ee; color: var(--text); }
+    .tab-btn.active {
+      background: var(--panel); color: var(--accent);
+      font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.07);
+    }
+
+    /* Utility buttons */
+    .btn {
+      height: 32px; border: 1px solid var(--line); border-radius: 6px;
+      background: #fff; color: var(--text); padding: 0 10px;
+      font-size: 13px; cursor: pointer; white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn.active {
+      border-color: var(--accent); background: var(--accent-soft);
+      color: var(--accent); font-weight: 700;
+    }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Tree tab */
+    #tab-tree main {
+      display: grid; grid-template-columns: 1fr 310px;
+      gap: 16px; padding: 16px 20px;
+    }
+    #tree-panel {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 8px; padding: 12px; overflow: auto;
+    }
+    .detail-panel {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 8px; padding: 14px;
+      height: fit-content; position: sticky; top: 60px;
+    }
+
+    .node { margin-left: 16px; border-left: 1px solid var(--line); padding-left: 10px; }
+    .node-row {
+      display: flex; align-items: center; gap: 6px;
+      min-height: 27px; border-radius: 5px; padding: 2px 5px;
+    }
+    .node-row:hover { background: #f2f7f4; }
+    .toggle {
+      width: 20px; height: 20px; border: 0; padding: 0;
+      background: transparent; font-size: 13px; color: var(--muted); cursor: pointer;
+    }
+    .leaf-space { width: 20px; flex: 0 0 20px; }
+    .name { font-size: 13px; cursor: pointer; flex: 1 1 auto; }
+    .name:hover { color: var(--accent); }
+    .type {
+      color: var(--accent); background: var(--accent-soft);
+      border-radius: 999px; padding: 1px 7px; font-size: 11px; flex-shrink: 0;
+    }
+    .count {
+      border-radius: 999px; padding: 1px 8px;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .count.empty { color: var(--muted); background: #f1f5f9; font-weight: 400; }
+    .children.collapsed { display: none; }
+    .hidden-by-search { display: none; }
+    mark.search-hl {
+      background: #fef08a; color: inherit;
+      border-radius: 2px; padding: 0 1px; font-weight: 600;
+    }
+
+    /* Detail panel */
+    .detail-title { margin: 0 0 6px; font-size: 15px; }
+    .detail-row { margin-top: 9px; font-size: 13px; }
+    .detail-row strong {
+      display: block; font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+    .chip {
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 2px 8px; font-size: 11px; background: #fbfcfb;
+    }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .questions { display: grid; gap: 8px; margin-top: 5px; max-height: 420px; overflow: auto; }
+    .question { border: 1px solid var(--line); border-radius: 6px; padding: 9px; background: #fbfcfb; }
+    .question-stem { font-size: 13px; line-height: 1.45; margin-bottom: 5px; }
+    .question-meta { color: var(--muted); font-size: 11px; }
+    .question-options { display: grid; gap: 3px; margin: 5px 0; color: #334155; font-size: 12px; }
+
+    /* Heatmap tab */
+    #tab-heatmap .page-body { padding: 20px; display: grid; gap: 16px; }
+    .heatmap-legend {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--muted);
+    }
+    .legend-scale { display: flex; height: 12px; width: 120px; border-radius: 3px; overflow: hidden; }
+    .legend-scale div { flex: 1; }
+    .heatmap-card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 8px; padding: 14px;
+    }
+    .heatmap-subject-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .heatmap-subject-name { font-size: 14px; font-weight: 700; }
+    .hm-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+    .hm-cell {
+      border-radius: 6px; padding: 8px 11px; cursor: pointer;
+      transition: opacity .15s, transform .12s; min-width: 90px;
+    }
+    .hm-cell:hover { opacity: .85; transform: translateY(-1px); }
+    .hm-cell-name { font-size: 11px; font-weight: 600; line-height: 1.3; margin-bottom: 1px; }
+    .hm-cell-paper { font-size: 10px; opacity: .7; margin-bottom: 3px; }
+    .hm-cell-count { font-size: 17px; font-weight: 800; }
+
+    /* Trends tab */
+    #tab-trends .page-body {
+      padding: 20px; display: grid;
+      grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .chart-card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 8px; padding: 18px;
+    }
+    .chart-card h2 { margin: 0 0 14px; font-size: 14px; font-weight: 700; }
+    .chart-wrap { position: relative; height: 260px; }
+
+    @media (max-width: 860px) {
+      header { flex-wrap: wrap; }
+      #tab-tree main { grid-template-columns: 1fr; }
+      .detail-panel { position: static; }
+      #tab-trends .page-body { grid-template-columns: 1fr; }
+      #search { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1 id="page-title">Syllabus Tree</h1>
+  <div class="header-right">
+    <input id="search" placeholder="Search..." />
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tree" onclick="showTab('tree')">Tree</button>
+      <button class="tab-btn" data-tab="heatmap" onclick="showTab('heatmap')">Heatmap</button>
+      <button class="tab-btn" data-tab="trends" onclick="showTab('trends')">Trends</button>
+    </div>
+    <button class="btn" id="lang-bn" onclick="setLang('bn')">বাংলা</button>
+    <button class="btn" id="lang-en" onclick="setLang('en')">English</button>
+    <button class="btn" id="btn-expand" onclick="setAllCollapsed(false)">Expand</button>
+    <button class="btn" id="btn-collapse" onclick="setAllCollapsed(true)">Collapse</button>
+  </div>
+</header>
+
+<!-- Tree tab -->
+<div id="tab-tree" class="tab-panel active">
+  <main>
+    <section id="tree-panel">Loading…</section>
+    <aside id="details" class="detail-panel">
+      <h2 class="detail-title">Select a node</h2>
+      <p class="muted">Click any syllabus item to see its questions, path, aliases, and keywords.</p>
+    </aside>
+  </main>
+</div>
+
+<!-- Heatmap tab -->
+<div id="tab-heatmap" class="tab-panel">
+  <div class="page-body">
+    <div class="heatmap-legend">
+      <span>Fewer</span>
+      <div class="legend-scale" id="legend-scale"></div>
+      <span>More questions</span>
+    </div>
+    <div id="heatmap-container"><p class="muted">Loading…</p></div>
+  </div>
+</div>
+
+<!-- Trends tab -->
+<div id="tab-trends" class="tab-panel">
+  <div class="page-body">
+    <div class="chart-card">
+      <h2 id="lbl-year-chart">Questions by Year</h2>
+      <div class="chart-wrap"><canvas id="year-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2 id="lbl-subject-chart">Questions by Subject</h2>
+      <div class="chart-wrap"><canvas id="subject-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// State
+let treeData = null, allRows = [], allNameEls = [], currentLanguage = "bn";
+let maxCount = 0, heatmapRendered = false, trendsLoaded = false;
+let yearChart = null, subjectChart = null;
+
+// i18n
+const L = {
+  bn: {
+    title: "সিলেবাস ট্রি", search: "নাম, alias, keyword খুঁজুন…",
+    expand: "সব খুলুন", collapse: "সব বন্ধ",
+    selectNode: "একটি নোড নির্বাচন করুন",
+    selectHelp: "প্রশ্ন, path ও alias দেখতে যেকোনো আইটেমে ক্লিক করুন।",
+    type: "ধরন", id: "ID", directCount: "সরাসরি প্রশ্ন",
+    subtreeCount: "মোট প্রশ্ন (সাবট্রি সহ)",
+    aliases: "বাংলা/অন্য নাম", keywords: "কীওয়ার্ড",
+    directQ: "এই নোডে ম্যাপড প্রশ্ন", subtreeQ: "সাবট্রিসহ সব প্রশ্ন",
+    noDirect: "এই নোডে সরাসরি প্রশ্ন নেই।", noSubtree: "এই নোডে কোনো প্রশ্ন নেই।",
+    loading: "লোড হচ্ছে…", qu: "টি", page: "পৃষ্ঠা",
+    yearChart: "বছর অনুযায়ী প্রশ্ন", subjectChart: "বিষয় অনুযায়ী প্রশ্ন",
+  },
+  en: {
+    title: "Syllabus Tree", search: "Search name, alias, keyword…",
+    expand: "Expand All", collapse: "Collapse All",
+    selectNode: "Select a node",
+    selectHelp: "Click any item to inspect questions, path, aliases, and keywords.",
+    type: "Type", id: "ID", directCount: "Questions Here",
+    subtreeCount: "Total (incl. children)",
+    aliases: "Aliases", keywords: "Keywords",
+    directQ: "Questions Mapped Here", subtreeQ: "Questions in Subtree",
+    noDirect: "No questions mapped directly here.", noSubtree: "No questions under this node.",
+    loading: "Loading…", qu: "q", page: "page",
+    yearChart: "Questions by Year", subjectChart: "Questions by Subject",
+  }
+};
+
+const typeLabels = {
+  bn: { subject:"বিষয়", paper:"পত্র", chapter:"অধ্যায়", section:"সেকশন",
+        subsection:"সাবসেকশন", topic:"টপিক", dynamic_topic:"নতুন টপিক" },
+  en: {}
+};
+
+// Helpers
+const textList = v => Array.isArray(v) ? v.filter(Boolean) : [];
+const displayName = n => { const a = textList(n.aliases); return (currentLanguage === "bn" && a.length) ? a[0] : (n.name || "Unnamed"); };
+const displayType = t => typeLabels[currentLanguage][t] || t || "node";
+const esc = v => String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+const nodeSearchText = (n, path) => [n.name, n.type, n.id, n.summary || "", path.join(" "), ...textList(n.aliases), ...textList(n.keywords)].join(" ").toLowerCase();
+
+function highlightText(text, q) {
+  if (!q || !text) return esc(text || "");
+  const lower = text.toLowerCase();
+  let result = "", last = 0, idx;
+  while ((idx = lower.indexOf(q, last)) !== -1) {
+    result += esc(text.slice(last, idx));
+    result += `<mark class="search-hl">${esc(text.slice(idx, idx + q.length))}</mark>`;
+    last = idx + q.length;
+  }
+  return result + esc(text.slice(last));
+}
+
+// Heat colour: interpolate accent-soft → accent
+function heatRgb(count, max) {
+  if (!count || !max) return null;
+  const r = Math.min(count / max, 1);
+  const from = [228, 243, 236], to = [31, 122, 90];
+  return {
+    bg: `rgb(${Math.round(from[0]+(to[0]-from[0])*r)},${Math.round(from[1]+(to[1]-from[1])*r)},${Math.round(from[2]+(to[2]-from[2])*r)})`,
+    text: r > 0.45 ? "#fff" : "#1a3d2b"
+  };
+}
+
+function buildLegend() {
+  const el = document.getElementById("legend-scale");
+  if (!el) return;
+  el.innerHTML = "";
+  for (let i = 0; i <= 18; i++) {
+    const c = heatRgb(i, 18);
+    const d = document.createElement("div");
+    d.style.background = c ? c.bg : "#f1f5f9";
+    el.appendChild(d);
+  }
+}
+
+// Tab switching
+function showTab(name) {
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id === "tab-" + name));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  const isTree = name === "tree";
+  document.getElementById("search").style.visibility = isTree ? "visible" : "hidden";
+  document.getElementById("btn-expand").style.display = isTree ? "" : "none";
+  document.getElementById("btn-collapse").style.display = isTree ? "" : "none";
+  if (name === "heatmap" && treeData && !heatmapRendered) { renderHeatmap(); heatmapRendered = true; }
+  if (name === "trends") loadTrends();
+}
+
+// Tree
+function renderQuestion(q) {
+  const opts = q.options || {};
+  const optHtml = ["A","B","C","D"].filter(k => opts[k]).map(k => `<div><b>${k}.</b> ${esc(opts[k])}</div>`).join("");
+  const src = [q.source_exam, q.source_year_label].filter(Boolean).join(" ");
+  const t = L[currentLanguage];
+  return `<article class="question">
+    <div class="question-stem">${esc(q.stem || q.raw_text || "—")}</div>
+    ${optHtml ? `<div class="question-options">${optHtml}</div>` : ""}
+    <div class="question-meta">${esc(q.id||"")}${q.page_number?` · ${t.page} ${q.page_number}`:""}${src?` · ${esc(src)}`:""}${q.subject_guess?` · ${esc(q.subject_guess)}`:""}</div>
+  </article>`;
+}
+
+async function loadNodeQuestions(node) {
+  const t = L[currentLanguage];
+  const target = document.getElementById("node-questions");
+  if (!target || !node.id) return;
+  target.innerHTML = `<div class="muted">${t.loading}</div>`;
+  try {
+    const d = await fetch("/api/node-questions/" + encodeURIComponent(node.id)).then(r => r.json());
+    const direct = d.direct_questions || [], subtree = d.subtree_questions || [];
+    target.innerHTML = `
+      <div class="detail-row"><strong>${t.directQ}</strong>${direct.length}</div>
+      <div class="questions">${direct.map(renderQuestion).join("") || `<div class="muted">${t.noDirect}</div>`}</div>
+      <div class="detail-row" style="margin-top:12px"><strong>${t.subtreeQ}</strong>${subtree.length}</div>
+      <div class="questions">${subtree.map(renderQuestion).join("") || `<div class="muted">${t.noSubtree}</div>`}</div>`;
+  } catch(e) { target.innerHTML = `<div class="muted">${esc(String(e))}</div>`; }
+}
+
+function showDetails(node, pathNodes) {
+  const t = L[currentLanguage];
+  const aliases = textList(node.aliases), keywords = textList(node.keywords);
+  document.getElementById("details").innerHTML = `
+    <h2 class="detail-title">${esc(displayName(node))}</h2>
+    <div class="muted" style="margin-bottom:6px">${esc(pathNodes.map(displayName).join(" > "))}</div>
+    <div class="detail-row"><strong>${t.type}</strong>${esc(displayType(node.type))}</div>
+    <div class="detail-row"><strong>${t.id}</strong><span class="muted">${esc(node.id||"")}</span></div>
+    <div class="detail-row"><strong>${t.directCount}</strong>${node._question_count_direct||0}</div>
+    <div class="detail-row"><strong>${t.subtreeCount}</strong>${node._question_count_total||0}</div>
+    <div class="detail-row"><strong>${t.aliases}</strong><div class="chips">${aliases.map(x=>`<span class="chip">${esc(x)}</span>`).join("")||"<span class='muted'>—</span>"}</div></div>
+    <div class="detail-row"><strong>${t.keywords}</strong><div class="chips">${keywords.map(x=>`<span class="chip">${esc(x)}</span>`).join("")||"<span class='muted'>—</span>"}</div></div>
+    <div id="node-questions"></div>`;
+  loadNodeQuestions(node);
+}
+
+function renderNode(node, path = []) {
+  const currentPath = [...path, node];
+  const children = Array.isArray(node.children) ? node.children : [];
+  const wrapper = document.createElement("div");
+  wrapper.className = "node";
+  wrapper.dataset.search = nodeSearchText(node, currentPath.map(n => n.name || ""));
+
+  const row = document.createElement("div");
+  row.className = "node-row";
+  const childrenEl = document.createElement("div");
+  childrenEl.className = "children";
+
+  if (children.length) {
+    const tog = document.createElement("button");
+    tog.className = "toggle"; tog.textContent = "▾";
+    tog.onclick = () => { childrenEl.classList.toggle("collapsed"); tog.textContent = childrenEl.classList.contains("collapsed") ? "▸" : "▾"; };
+    row.appendChild(tog);
+  } else {
+    const sp = document.createElement("span"); sp.className = "leaf-space"; row.appendChild(sp);
+  }
+
+  const nameEl = document.createElement("span");
+  nameEl.className = "name"; nameEl.innerHTML = esc(displayName(node));
+  nameEl.onclick = () => showDetails(node, currentPath);
+  row.appendChild(nameEl);
+  allNameEls.push({ el: nameEl, node });
+
+  const typeEl = document.createElement("span");
+  typeEl.className = "type"; typeEl.textContent = displayType(node.type);
+  row.appendChild(typeEl);
+
+  const total = node._question_count_total || 0;
+  const direct = node._question_count_direct || 0;
+  const countEl = document.createElement("span");
+  const heat = heatRgb(total, maxCount);
+  if (heat) {
+    countEl.className = "count heat";
+    countEl.style.background = heat.bg;
+    countEl.style.color = heat.text;
+  } else {
+    countEl.className = "count empty";
+  }
+  countEl.title = `${direct} direct · ${total} incl. children`;
+  countEl.textContent = `${total} ${L[currentLanguage].qu}`;
+  row.appendChild(countEl);
+
+  wrapper.appendChild(row);
+  children.forEach(c => childrenEl.appendChild(renderNode(c, currentPath)));
+  wrapper.appendChild(childrenEl);
+  allRows.push(wrapper);
+  return wrapper;
+}
+
+function setAllCollapsed(collapsed) {
+  document.querySelectorAll(".children").forEach(el => el.classList.toggle("collapsed", collapsed));
+  document.querySelectorAll(".toggle").forEach(b => b.textContent = collapsed ? "▸" : "▾");
+}
+
+function applySearch() {
+  const q = document.getElementById("search").value.trim().toLowerCase();
+
+  if (!q) {
+    allRows.forEach(r => r.classList.remove("hidden-by-search"));
+    allNameEls.forEach(({ el, node }) => { el.innerHTML = esc(displayName(node)); });
+    setAllCollapsed(true);
+    return;
+  }
+
+  setAllCollapsed(false);
+
+  // Hide everything first, then reveal matching nodes and every ancestor they need.
+  allRows.forEach(r => r.classList.add("hidden-by-search"));
+
+  const panel = document.getElementById("tree-panel");
+  allRows.forEach(r => {
+    if (!r.dataset.search.includes(q)) return;
+    r.classList.remove("hidden-by-search");
+    // Walk up the DOM so ancestor .node elements are also visible.
+    let el = r.parentElement;
+    while (el && el !== panel) {
+      if (el.classList.contains("node")) el.classList.remove("hidden-by-search");
+      el = el.parentElement;
+    }
+  });
+
+  // Highlight matching text in node name labels.
+  allNameEls.forEach(({ el, node }) => {
+    el.innerHTML = highlightText(displayName(node), q);
+  });
+}
+
+function computeMaxCount(tree) {
+  let m = 0;
+  function walk(n) { m = Math.max(m, n._question_count_total || 0); (n.children||[]).forEach(walk); }
+  (tree.subjects || []).forEach(walk);
+  return m;
+}
+
+function updateStaticText() {
+  const t = L[currentLanguage];
+  document.getElementById("page-title").textContent = t.title;
+  document.getElementById("search").placeholder = t.search;
+  document.getElementById("btn-expand").textContent = t.expand;
+  document.getElementById("btn-collapse").textContent = t.collapse;
+  document.getElementById("lang-bn").classList.toggle("active", currentLanguage === "bn");
+  document.getElementById("lang-en").classList.toggle("active", currentLanguage === "en");
+  const ly = document.getElementById("lbl-year-chart"), ls = document.getElementById("lbl-subject-chart");
+  if (ly) ly.textContent = t.yearChart;
+  if (ls) ls.textContent = t.subjectChart;
+}
+
+function renderTree() {
+  if (!treeData) return;
+  maxCount = computeMaxCount(treeData);
+  updateStaticText();
+  const panel = document.getElementById("tree-panel");
+  panel.innerHTML = ""; allRows = []; allNameEls = [];
+  (treeData.subjects || []).forEach(s => panel.appendChild(renderNode(s)));
+  setAllCollapsed(true);
+  const t = L[currentLanguage];
+  document.getElementById("details").innerHTML = `<h2 class="detail-title">${t.selectNode}</h2><p class="muted">${t.selectHelp}</p>`;
+  applySearch();
+  heatmapRendered = false;
+}
+
+function setLang(lang) {
+  currentLanguage = lang;
+  renderTree();
+  if (heatmapRendered) { heatmapRendered = false; renderHeatmap(); heatmapRendered = true; }
+}
+
+// Heatmap
+function renderHeatmap() {
+  const container = document.getElementById("heatmap-container");
+  if (!container || !treeData) return;
+
+  let globalMax = 0;
+  const subjects = (treeData.subjects || []).map(subj => {
+    const chapters = [];
+    (subj.children || []).forEach(paper => {
+      const kids = paper.children || [];
+      if (kids.length) {
+        kids.forEach(ch => {
+          chapters.push({ node: ch, paper: displayName(paper) });
+          globalMax = Math.max(globalMax, ch._question_count_total || 0);
+        });
+      } else {
+        chapters.push({ node: paper, paper: "" });
+        globalMax = Math.max(globalMax, paper._question_count_total || 0);
+      }
+    });
+    return { subj, chapters };
+  }).filter(x => x.chapters.length);
+
+  buildLegend();
+  container.innerHTML = "";
+
+  subjects.forEach(({ subj, chapters }) => {
+    const card = document.createElement("div");
+    card.className = "heatmap-card";
+    const total = subj._question_count_total || 0;
+    const h = heatRgb(total, globalMax);
+    card.innerHTML = `<div class="heatmap-subject-header">
+      <span class="heatmap-subject-name">${esc(displayName(subj))}</span>
+      <span class="count ${h ? "heat" : "empty"}" ${h ? `style="background:${h.bg};color:${h.text}"` : ""}>${total} ${L[currentLanguage].qu}</span>
+    </div>`;
+
+    const grid = document.createElement("div");
+    grid.className = "hm-grid";
+    chapters.forEach(({ node, paper }) => {
+      const cnt = node._question_count_total || 0;
+      const c = heatRgb(cnt, globalMax) || { bg: "#f1f5f9", text: "#94a3b8" };
+      const cell = document.createElement("div");
+      cell.className = "hm-cell";
+      cell.style.cssText = `background:${c.bg};color:${c.text}`;
+      cell.title = `${cnt} questions`;
+      cell.innerHTML = `<div class="hm-cell-name">${esc(displayName(node))}</div>${paper ? `<div class="hm-cell-paper">${esc(paper)}</div>` : ""}<div class="hm-cell-count">${cnt}</div>`;
+      cell.onclick = () => showTab("tree");
+      grid.appendChild(cell);
+    });
+    card.appendChild(grid);
+    container.appendChild(card);
+  });
+}
+
+// Trends
+async function loadTrends() {
+  if (trendsLoaded) return;
+  trendsLoaded = true;
+  let data;
+  try { data = await fetch("/api/stats").then(r => r.json()); }
+  catch(e) { return; }
+
+  const years = Object.keys(data.years).sort((a, b) => parseInt(a) - parseInt(b));
+  const yearVals = years.map(y => data.years[y]);
+  const subjects = Object.keys(data.subjects).sort((a, b) => data.subjects[b] - data.subjects[a]);
+  const subjectVals = subjects.map(s => data.subjects[s]);
+  const palette = ["#1f7a5a", "#2563eb", "#7c3aed", "#dc2626", "#ea580c", "#0891b2", "#65a30d"];
+  const gridColor = "#eef2f0";
+
+  if (yearChart) yearChart.destroy();
+  yearChart = new Chart(document.getElementById("year-chart"), {
+    type: "bar",
+    data: { labels: years, datasets: [{ data: yearVals, backgroundColor: "#1f7a5a", borderRadius: 5 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: gridColor } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  if (subjectChart) subjectChart.destroy();
+  subjectChart = new Chart(document.getElementById("subject-chart"), {
+    type: "bar",
+    data: {
+      labels: subjects,
+      datasets: [{ data: subjectVals, backgroundColor: subjects.map((_, i) => palette[i % palette.length]), borderRadius: 5 }]
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: gridColor } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// Boot
+document.getElementById("search").addEventListener("input", applySearch);
+
+fetch("/api/tree")
+  .then(r => r.json())
+  .then(d => { treeData = d; renderTree(); })
+  .catch(e => { document.getElementById("tree-panel").textContent = String(e); });
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+google-genai
+python-dotenv
+pymupdf
+tqdm
+fastapi
+uvicorn
