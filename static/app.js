@@ -1,0 +1,1657 @@
+// Shokti Client Application State
+let state = {
+  token: localStorage.getItem('shokti_access_token') || '',
+  refreshToken: localStorage.getItem('shokti_refresh_token') || '',
+  user: null,
+  examsLocked: false,
+  latestExamFeedback: null,
+  latestExamAnswerAudit: [],
+  
+  // Practice Session State
+  practice: {
+    sessionId: null,
+    mcqs: [],
+    currentIndex: 0,
+    answers: [],
+    questionStartTime: null,
+    mode: 'adaptive'
+  },
+  
+  // Exam Session State
+  exam: {
+    examId: null,
+    title: '',
+    mcqs: [],
+    currentIndex: 0,
+    answers: {}, // map of mcq_id -> selected_option
+    timerInterval: null,
+    secondsRemaining: 0,
+    startTime: null,
+    mcqCache: {} // Cache complete MCQ details
+  },
+  
+  // Global Catalog
+  catalog: {
+    subjects: [],
+    books: [],
+    chapters: [],
+    topics: []
+  },
+  
+  // Charts
+  learningCurveChart: null
+};
+
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+  handleRouting();
+  window.addEventListener('hashchange', handleRouting);
+});
+
+// --- API Helpers ---
+async function apiRequest(path, method = 'GET', body = null) {
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+  if (state.token) {
+    headers['Authorization'] = `Bearer ${state.token}`;
+  }
+  
+  const options = {
+    method,
+    headers
+  };
+  
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+  
+  let response = await fetch(path, options);
+  
+  // Handle token expiration / refresh
+  if (response.status === 401 && state.refreshToken) {
+    const refreshed = await tryTokenRefresh();
+    if (refreshed) {
+      headers['Authorization'] = `Bearer ${state.token}`;
+      // Need to re-create options with fresh headers
+      const retryOptions = { ...options, headers };
+      response = await fetch(path, retryOptions);
+    } else {
+      handleLogout();
+      throw new Error("Session expired. Please log in again.");
+    }
+  }
+  
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.detail || `Request failed with status ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+async function tryTokenRefresh() {
+  try {
+    const res = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: state.refreshToken })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      state.token = data.access_token;
+      state.refreshToken = data.refresh_token || state.refreshToken;
+      localStorage.setItem('shokti_access_token', state.token);
+      localStorage.setItem('shokti_refresh_token', state.refreshToken);
+      return true;
+    }
+  } catch (e) {
+    console.error("Token refresh failed", e);
+  }
+  return false;
+}
+
+// --- Dynamic Scroll Utility for Landing Page ---
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+// --- View Navigation & Routing ---
+function showView(viewId) {
+  document.querySelectorAll('.view-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+  const target = document.getElementById(viewId);
+  if (target) {
+    target.classList.add('active');
+  }
+}
+
+function navigateToView(viewName) {
+  window.location.hash = `#${viewName}`;
+}
+
+async function handleRouting() {
+  const hash = window.location.hash || '#landing';
+  
+  if (state.token) {
+    // Authenticated path
+    if (!state.user) {
+      try {
+        state.user = await apiRequest('/api/auth/me');
+        document.getElementById('user-profile-name').textContent = state.user.name;
+        
+        // Populate profile page details
+        document.getElementById('profile-user-name').textContent = state.user.name;
+        document.getElementById('profile-user-email').textContent = state.user.email;
+        document.getElementById('profile-avatar-initial').textContent = state.user.name.charAt(0).toUpperCase();
+      } catch (e) {
+        console.warn("Auth check failed on routing", e);
+        handleLogout();
+        return;
+      }
+    }
+
+    // Always fetch exams completion status to decide if tabs are locked
+    try {
+      const exams = await apiRequest('/api/exams');
+      const totalExams = exams.length;
+      const completedExams = exams.filter(ex => ex.is_completed);
+      state.examsLocked = totalExams > 0 && (completedExams.length < totalExams);
+      updateNavigationTabsLock();
+    } catch (err) {
+      console.warn("Failed to check exams completion status on routing", err);
+    }
+    
+    // Check if the user is on landing/auth hashes while logged in, redirect them to exams tab
+    const publicHashes = ['#landing', '#login', '#register'];
+    if (publicHashes.includes(hash)) {
+      window.location.hash = '#exams';
+      return;
+    }
+    
+    showView('portal-view');
+    
+    // Route to portal tabs
+    const validTabs = ['dashboard', 'practice', 'exams', 'analytics', 'profile'];
+    let tab = hash.substring(1);
+    if (!validTabs.includes(tab)) {
+      window.location.hash = '#exams';
+      return;
+    }
+
+    // Lock routing for dashboard, practice, and analytics if exams are locked
+    const lockedTabs = ['dashboard', 'practice', 'analytics'];
+    if (state.examsLocked && lockedTabs.includes(tab)) {
+      window.location.hash = '#exams';
+      return;
+    }
+    
+    switchPortalTab(tab);
+  } else {
+    // Unauthenticated path
+    document.getElementById('portal-view').classList.remove('active');
+    
+    if (hash === '#login') {
+      showView('auth-view');
+      switchAuthTab('login');
+    } else if (hash === '#register') {
+      showView('auth-view');
+      switchAuthTab('register');
+    } else {
+      // Default view is Landing Page
+      window.location.hash = '#landing';
+      showView('landing-view');
+    }
+  }
+}
+
+function updateNavigationTabsLock() {
+  const locked = state.examsLocked;
+  
+  const dashboardTab = document.getElementById('nav-dashboard');
+  const practiceTab = document.getElementById('nav-practice');
+  const analyticsTab = document.getElementById('nav-analytics');
+  
+  if (dashboardTab) {
+    if (locked) {
+      dashboardTab.classList.add('tab-locked');
+      dashboardTab.innerHTML = '🔒 Dashboard';
+      dashboardTab.style.opacity = '0.6';
+      dashboardTab.style.cursor = 'not-allowed';
+    } else {
+      dashboardTab.classList.remove('tab-locked');
+      dashboardTab.innerHTML = 'Dashboard';
+      dashboardTab.style.opacity = '1';
+      dashboardTab.style.cursor = 'pointer';
+    }
+  }
+  if (practiceTab) {
+    if (locked) {
+      practiceTab.classList.add('tab-locked');
+      practiceTab.innerHTML = '🔒 Practice Session';
+      practiceTab.style.opacity = '0.6';
+      practiceTab.style.cursor = 'not-allowed';
+    } else {
+      practiceTab.classList.remove('tab-locked');
+      practiceTab.innerHTML = 'Practice Session';
+      practiceTab.style.opacity = '1';
+      practiceTab.style.cursor = 'pointer';
+    }
+  }
+  if (analyticsTab) {
+    if (locked) {
+      analyticsTab.classList.add('tab-locked');
+      analyticsTab.innerHTML = '🔒 Analytics';
+      analyticsTab.style.opacity = '0.6';
+      analyticsTab.style.cursor = 'not-allowed';
+    } else {
+      analyticsTab.classList.remove('tab-locked');
+      analyticsTab.innerHTML = 'Analytics';
+      analyticsTab.style.opacity = '1';
+      analyticsTab.style.cursor = 'pointer';
+    }
+  }
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('tab-login-btn').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register-btn').classList.toggle('active', tab === 'register');
+  document.getElementById('login-form').classList.toggle('active', tab === 'login');
+  document.getElementById('register-form').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-error').classList.add('hidden');
+}
+
+function switchPortalTab(tab) {
+  const lockedTabs = ['dashboard', 'practice', 'analytics'];
+  if (state.examsLocked && lockedTabs.includes(tab)) {
+    alert("🔒 Complete all available fixed exams first to unlock your personalized learning workspace, adaptive practice sessions, and detailed analytics!");
+    window.location.hash = '#exams';
+    return;
+  }
+
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const navBtn = document.getElementById(`nav-${tab}`);
+  if (navBtn) navBtn.classList.add('active');
+  
+  document.querySelectorAll('.portal-tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  const tabContent = document.getElementById(`tab-${tab}`);
+  if (tabContent) tabContent.classList.add('active');
+  
+  // Refresh Tab specific data
+  if (tab === 'dashboard') {
+    loadDashboard();
+  } else if (tab === 'practice') {
+    resetPracticeTab();
+    loadCatalogFilters();
+  } else if (tab === 'exams') {
+    resetExamsTab();
+    loadExams();
+  } else if (tab === 'analytics') {
+    loadAnalytics();
+  } else if (tab === 'profile') {
+    loadProfileStats();
+  }
+}
+
+// --- Auth Operations ---
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const errDiv = document.getElementById('auth-error');
+  
+  try {
+    const data = await apiRequest('/api/auth/login', 'POST', { email, password });
+    state.token = data.access_token;
+    state.refreshToken = data.refresh_token;
+    localStorage.setItem('shokti_access_token', state.token);
+    localStorage.setItem('shokti_refresh_token', state.refreshToken);
+    errDiv.classList.add('hidden');
+    
+    // Trigger router update
+    window.location.hash = '#dashboard';
+  } catch (err) {
+    errDiv.textContent = err.message;
+    errDiv.classList.remove('hidden');
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+  const errDiv = document.getElementById('auth-error');
+  
+  try {
+    const data = await apiRequest('/api/auth/register', 'POST', { name, email, password });
+    state.token = data.access_token;
+    state.refreshToken = data.refresh_token;
+    localStorage.setItem('shokti_access_token', state.token);
+    localStorage.setItem('shokti_refresh_token', state.refreshToken);
+    errDiv.classList.add('hidden');
+    
+    // Trigger router update
+    window.location.hash = '#dashboard';
+  } catch (err) {
+    errDiv.textContent = err.message;
+    errDiv.classList.remove('hidden');
+  }
+}
+
+function handleLogout() {
+  state.token = '';
+  state.refreshToken = '';
+  state.user = null;
+  localStorage.removeItem('shokti_access_token');
+  localStorage.removeItem('shokti_refresh_token');
+  
+  // Clear any timers
+  if (state.exam.timerInterval) {
+    clearInterval(state.exam.timerInterval);
+  }
+  
+  // Trigger router update
+  window.location.hash = '#landing';
+}
+
+// --- Dashboard Loading ---
+async function loadDashboard() {
+  try {
+    const stats = await apiRequest('/api/student/stats');
+    document.getElementById('header-streak').textContent = stats.current_streak;
+    document.getElementById('header-answered').textContent = stats.total_answered;
+    
+    // Load Weakest topics
+    const weak = await apiRequest('/api/student/weak-topics');
+    const weakList = document.getElementById('weak-topics-list');
+    
+    if (weak && weak.length > 0) {
+      weakList.innerHTML = '';
+      weak.slice(0, 4).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'weak-topic-item';
+        div.innerHTML = `
+          <div class="weak-topic-meta">
+            <span>${item.topic_name} (${item.chapter_name})</span>
+            <span>${item.accuracy.toFixed(0)}% Accuracy</span>
+          </div>
+          <div class="weak-progress-bar">
+            <div class="weak-progress-fill" style="width: ${item.accuracy}%"></div>
+          </div>
+        `;
+        weakList.appendChild(div);
+      });
+    } else {
+      weakList.innerHTML = `<p class="muted-text">Great job! No weak topics found yet. Take a diagnostic or mock exam to populate your stats.</p>`;
+    }
+    
+    // Load Exam shortcuts
+    const exams = await apiRequest('/api/exams');
+    const examShortcutBox = document.getElementById('dashboard-exam-shortcuts');
+    examShortcutBox.innerHTML = '';
+    
+    exams.slice(0, 3).forEach(ex => {
+      const div = document.createElement('div');
+      div.className = 'exam-shortcut';
+      div.innerHTML = `
+        <div class="exam-shortcut-info">
+          <h4>${ex.title}</h4>
+          <p>${ex.mcq_count} Questions | ${ex.duration_minutes}m</p>
+        </div>
+        <button class="btn primary-btn btn-sm" onclick="startShortcutExam('${ex.exam_id}')">Start</button>
+      `;
+      examShortcutBox.appendChild(div);
+    });
+    
+  } catch (e) {
+    console.error("Dashboard failed to load", e);
+  }
+}
+
+// --- Catalog Cascading Filters ---
+async function loadCatalogFilters() {
+  try {
+    state.catalog.subjects = await apiRequest('/api/subjects');
+    const subSel = document.getElementById('practice-subject');
+    subSel.innerHTML = '<option value="">All Subjects</option>';
+    state.catalog.subjects.forEach(s => {
+      subSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+    });
+    
+    // Reset dependant dropdowns
+    document.getElementById('practice-book').innerHTML = '<option value="">All Books</option>';
+    document.getElementById('practice-book').disabled = true;
+    document.getElementById('practice-chapter').innerHTML = '<option value="">All Chapters</option>';
+    document.getElementById('practice-chapter').disabled = true;
+    document.getElementById('practice-topic').innerHTML = '<option value="">All Topics</option>';
+    document.getElementById('practice-topic').disabled = true;
+  } catch (e) {
+    console.error("Catalog load failed", e);
+  }
+}
+
+async function loadSubjectBooks(subjectId) {
+  const bookSel = document.getElementById('practice-book');
+  bookSel.innerHTML = '<option value="">All Books</option>';
+  
+  if (!subjectId) {
+    bookSel.disabled = true;
+    return;
+  }
+  
+  try {
+    state.catalog.books = await apiRequest(`/api/books?subject_id=${subjectId}`);
+    state.catalog.books.forEach(b => {
+      bookSel.innerHTML += `<option value="${b.id}">${b.title}</option>`;
+    });
+    bookSel.disabled = false;
+    
+    // Reset chapter/topic
+    document.getElementById('practice-chapter').innerHTML = '<option value="">All Chapters</option>';
+    document.getElementById('practice-chapter').disabled = true;
+    document.getElementById('practice-topic').innerHTML = '<option value="">All Topics</option>';
+    document.getElementById('practice-topic').disabled = true;
+  } catch (e) {
+    console.error("Books load failed", e);
+  }
+}
+
+async function loadBookChapters(bookId) {
+  const chSel = document.getElementById('practice-chapter');
+  chSel.innerHTML = '<option value="">All Chapters</option>';
+  
+  if (!bookId) {
+    chSel.disabled = true;
+    return;
+  }
+  
+  try {
+    state.catalog.chapters = await apiRequest(`/api/chapters?book_id=${bookId}`);
+    state.catalog.chapters.forEach(c => {
+      chSel.innerHTML += `<option value="${c.chapter_id}">${c.chapter_name}</option>`;
+    });
+    chSel.disabled = false;
+    
+    document.getElementById('practice-topic').innerHTML = '<option value="">All Topics</option>';
+    document.getElementById('practice-topic').disabled = true;
+  } catch (e) {
+    console.error("Chapters load failed", e);
+  }
+}
+
+async function loadChapterTopics(chapterId) {
+  const topSel = document.getElementById('practice-topic');
+  topSel.innerHTML = '<option value="">All Topics</option>';
+  
+  if (!chapterId) {
+    topSel.disabled = true;
+    return;
+  }
+  
+  try {
+    state.catalog.topics = await apiRequest(`/api/topics?chapter_id=${chapterId}`);
+    state.catalog.topics.forEach(t => {
+      topSel.innerHTML += `<option value="${t.topic_name}">${t.topic_name}</option>`;
+    });
+    topSel.disabled = false;
+  } catch (e) {
+    console.error("Topics load failed", e);
+  }
+}
+
+// --- Practice Session Runner ---
+function resetPracticeTab() {
+  document.getElementById('practice-setup-card').classList.remove('hidden');
+  document.getElementById('practice-runner').classList.add('hidden');
+  document.getElementById('session-summary').classList.add('hidden');
+}
+
+async function startQuickPractice(mode) {
+  switchPortalTab('practice');
+  document.getElementById('practice-mode').value = mode;
+  document.getElementById('practice-count').value = 10;
+  await launchPracticeSession();
+}
+
+async function launchPracticeSession() {
+  const mode = document.getElementById('practice-mode').value;
+  const count = parseInt(document.getElementById('practice-count').value);
+  const chapterEl = document.getElementById('practice-chapter');
+  const topicEl = document.getElementById('practice-topic');
+  
+  const payload = {
+    mode: mode,
+    count: count,
+    topic_name: topicEl.value || null,
+    chapter_name: chapterEl.value ? chapterEl.options[chapterEl.selectedIndex].text : null
+  };
+  
+  try {
+    const sessionData = await apiRequest('/api/practice/session', 'POST', payload);
+    if (!sessionData.mcqs || sessionData.mcqs.length === 0) {
+      alert("No questions found matching your filter criteria.");
+      return;
+    }
+    
+    // Initialize practice state
+    state.practice = {
+      sessionId: sessionData.session_id,
+      mcqs: sessionData.mcqs,
+      currentIndex: 0,
+      answers: [],
+      mode: mode
+    };
+    
+    document.getElementById('practice-session-badge').textContent = `${mode.toUpperCase()} MODE`;
+    document.getElementById('practice-setup-card').classList.add('hidden');
+    document.getElementById('practice-runner').classList.remove('hidden');
+    
+    await loadPracticeMCQ();
+  } catch (e) {
+    alert("Failed to start session: " + e.message);
+  }
+}
+
+async function loadPracticeMCQ() {
+  const idx = state.practice.currentIndex;
+  const total = state.practice.mcqs.length;
+  
+  document.getElementById('practice-question-counter').textContent = `Question ${idx + 1} of ${total}`;
+  document.getElementById('practice-progress-fill').style.width = `${(idx / total) * 100}%`;
+  
+  // Hide feedback
+  document.getElementById('feedback-card').classList.add('hidden');
+  
+  // Re-enable option buttons
+  document.querySelectorAll('#q-options .option-btn').forEach(btn => {
+    btn.className = 'option-btn';
+    btn.disabled = false;
+  });
+  
+  const briefMcq = state.practice.mcqs[idx];
+  
+  try {
+    const mcq = await apiRequest(`/api/mcqs/${briefMcq.id}`);
+    state.practice.currentMcq = mcq;
+    
+    // Render text
+    document.getElementById('q-topic-tag').textContent = mcq.topic_name;
+    document.getElementById('q-difficulty-tag').textContent = mcq.difficulty.toUpperCase();
+    document.getElementById('q-difficulty-tag').className = `meta-tag difficulty-tag ${mcq.difficulty}`;
+    document.getElementById('q-text').textContent = mcq.question;
+    
+    // Options
+    const optGrid = document.getElementById('q-options');
+    optGrid.innerHTML = '';
+    
+    ['A', 'B', 'C', 'D'].forEach(key => {
+      const text = mcq.options[key] || '';
+      if (text) {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.onclick = () => selectOption(key);
+        btn.innerHTML = `<span class="opt-letter">${key}</span> <span class="opt-text">${text}</span>`;
+        optGrid.appendChild(btn);
+      }
+    });
+    
+    state.practice.questionStartTime = Date.now();
+  } catch (e) {
+    console.error("MCQ fetch failed", e);
+  }
+}
+
+async function selectOption(selectedOpt) {
+  // Disable option buttons
+  document.querySelectorAll('#q-options .option-btn').forEach(btn => {
+    btn.disabled = true;
+  });
+  
+  const timeSpent = Math.max(1, Math.round((Date.now() - state.practice.questionStartTime) / 1000));
+  const mcq = state.practice.currentMcq;
+  
+  // Color the clicked option to show selected state immediately
+  const buttons = document.querySelectorAll('#q-options .option-btn');
+  buttons.forEach(btn => {
+    if (btn.querySelector('.opt-letter').textContent === selectedOpt) {
+      btn.classList.add('selected');
+    }
+  });
+  
+  try {
+    const res = await apiRequest(`/api/practice/sessions/${state.practice.sessionId}/answer`, 'POST', {
+      mcq_id: mcq.id,
+      selected_option: selectedOpt,
+      time_spent_seconds: timeSpent
+    });
+    
+    // Record to local state
+    state.practice.answers.push({
+      mcq_id: mcq.id,
+      topic_name: mcq.topic_name,
+      is_correct: res.is_correct,
+      time_spent: timeSpent
+    });
+    
+    // Update button colors
+    buttons.forEach(btn => {
+      const letter = btn.querySelector('.opt-letter').textContent;
+      if (letter === res.correct_option) {
+        btn.classList.remove('selected');
+        btn.classList.add('correct');
+      } else if (letter === selectedOpt && !res.is_correct) {
+        btn.classList.remove('selected');
+        btn.classList.add('wrong');
+      }
+    });
+    
+    // Show feedback card
+    document.getElementById('feedback-icon-val').textContent = res.is_correct ? '✅' : '❌';
+    document.getElementById('feedback-status-text').textContent = res.is_correct ? 'Correct!' : 'Wrong Answer';
+    document.getElementById('explanation-text').innerHTML = res.explanation || 'No explanation available for this question.';
+    
+    // SM-2 Schedule
+    const nextReview = document.getElementById('next-review-badge');
+    nextReview.textContent = res.is_correct ? '⚡ Scheduled review increased' : '⚡ Review scheduled for tomorrow';
+    
+    document.getElementById('feedback-card').classList.remove('hidden');
+    
+  } catch (e) {
+    alert("Failed to submit answer: " + e.message);
+  }
+}
+
+function goToNextQuestion() {
+  state.practice.currentIndex++;
+  if (state.practice.currentIndex < state.practice.mcqs.length) {
+    loadPracticeMCQ();
+  } else {
+    showSessionSummary();
+  }
+}
+
+function confirmEndSession() {
+  if (confirm("Are you sure you want to end this practice session? Your progress so far is saved.")) {
+    showSessionSummary();
+  }
+}
+
+function showSessionSummary() {
+  document.getElementById('practice-runner').classList.add('hidden');
+  document.getElementById('session-summary').classList.remove('hidden');
+  
+  const answers = state.practice.answers;
+  const total = answers.length;
+  const correct = answers.filter(a => a.is_correct).length;
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  
+  const totalTime = answers.reduce((acc, a) => acc + a.time_spent, 0);
+  const avgTime = total > 0 ? Math.round(totalTime / total) : 0;
+  
+  document.getElementById('summary-correct-ratio').textContent = `${correct}/${total}`;
+  document.getElementById('summary-percentage').textContent = `${pct}%`;
+  document.getElementById('summary-avg-time').textContent = `${avgTime}s`;
+  
+  // Render per-topic breakdown
+  const topicStats = {};
+  answers.forEach(ans => {
+    if (!topicStats[ans.topic_name]) {
+      topicStats[ans.topic_name] = { total: 0, correct: 0 };
+    }
+    topicStats[ans.topic_name].total++;
+    if (ans.is_correct) topicStats[ans.topic_name].correct++;
+  });
+  
+  const breakdownBox = document.getElementById('summary-topic-breakdown');
+  breakdownBox.innerHTML = '';
+  
+  for (const [topic, s] of Object.entries(topicStats)) {
+    const accuracy = Math.round((s.correct / s.total) * 100);
+    const div = document.createElement('div');
+    div.className = 'summary-topic-bar-item';
+    div.innerHTML = `
+      <span class="topic-bar-label">${topic}</span>
+      <div style="flex: 1; margin: 0 20px;">
+        <div class="weak-progress-bar">
+          <div class="weak-progress-fill" style="width: ${accuracy}%; background-color: ${accuracy >= 60 ? 'var(--success)' : 'var(--danger)'}"></div>
+        </div>
+      </div>
+      <span class="topic-bar-percent">${s.correct}/${s.total} (${accuracy}%)</span>
+    `;
+    breakdownBox.appendChild(div);
+  }
+}
+
+// --- Timed Exams Tab ---
+function resetExamsTab() {
+  document.getElementById('exams-list-container').classList.remove('hidden');
+  document.getElementById('exam-runner').classList.add('hidden');
+  document.getElementById('exam-results-summary').classList.add('hidden');
+  
+  if (state.exam.timerInterval) {
+    clearInterval(state.exam.timerInterval);
+  }
+}
+
+async function loadExams() {
+  try {
+    const exams = await apiRequest('/api/exams');
+    
+    const totalExams = exams.length;
+    const completedExams = exams.filter(ex => ex.is_completed);
+    state.examsLocked = totalExams > 0 && (completedExams.length < totalExams);
+    
+    const banner = document.getElementById('exams-diagnostic-banner');
+    if (banner) {
+      if (state.examsLocked) {
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+    
+    updateNavigationTabsLock();
+
+    const container = document.getElementById('exams-grid-data');
+    container.innerHTML = '';
+    
+    exams.forEach(ex => {
+      const card = document.createElement('div');
+      card.className = 'exam-card';
+      
+      const badgeHtml = ex.is_completed 
+        ? `<span class="meta-tag success" style="margin-left: 8px; vertical-align: middle; background-color: var(--success-bg); color: var(--success); font-size: 11px; padding: 3px 8px; border-radius: 8px;">✓ Completed</span>` 
+        : ``;
+        
+      const btnClass = ex.is_completed ? 'btn secondary-btn btn-full' : 'btn primary-btn btn-full';
+      const btnText = ex.is_completed ? 'Retry Exam' : 'Launch Exam';
+      
+      card.innerHTML = `
+        <div>
+          <h3 class="exam-card-title">${ex.title}${badgeHtml}</h3>
+          <p class="exam-card-meta">${ex.mcq_count} Questions | ${ex.duration_minutes} Minutes</p>
+        </div>
+        <button class="${btnClass}" onclick="startExam('${ex.exam_id}')">${btnText}</button>
+      `;
+      container.appendChild(card);
+    });
+  } catch (e) {
+    console.error("Exams listing failed", e);
+  }
+}
+
+async function startShortcutExam(examId) {
+  switchPortalTab('exams');
+  await startExam(examId);
+}
+
+async function startExam(examId) {
+  try {
+    const startData = await apiRequest(`/api/exams/${examId}/start`, 'POST');
+    
+    state.exam = {
+      examId: examId,
+      title: `Mock Test ${examId}`,
+      mcqs: startData.mcqs,
+      currentIndex: 0,
+      answers: {},
+      secondsRemaining: startData.duration_minutes * 60,
+      startTime: Date.now(),
+      mcqCache: {} // Reset Cache
+    };
+    
+    document.getElementById('exam-runner-title').textContent = state.exam.title.toUpperCase();
+    document.getElementById('exams-list-container').classList.add('hidden');
+    document.getElementById('exam-runner').classList.remove('hidden');
+    
+    startExamTimer();
+    await loadAllExamQuestions();
+  } catch (e) {
+    alert("Failed to start exam: " + e.message);
+  }
+}
+
+function startExamTimer() {
+  if (state.exam.timerInterval) {
+    clearInterval(state.exam.timerInterval);
+  }
+  
+  const timerLabel = document.getElementById('exam-timer');
+  
+  state.exam.timerInterval = setInterval(() => {
+    state.exam.secondsRemaining--;
+    if (state.exam.secondsRemaining <= 0) {
+      clearInterval(state.exam.timerInterval);
+      alert("Time is up! Submitting exam automatically.");
+      submitExam();
+    } else {
+      const mins = Math.floor(state.exam.secondsRemaining / 60);
+      const secs = state.exam.secondsRemaining % 60;
+      timerLabel.textContent = `Time Left: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+  }, 1000);
+}
+
+async function loadAllExamQuestions() {
+  const container = document.getElementById('exam-scrollable-questions-container');
+  if (!container) return;
+  
+  container.innerHTML = '<div style="text-align: center; padding: 20px; font-weight: 500; color: var(--text-muted);">Loading exam questions...</div>';
+  
+  try {
+    const promises = state.exam.mcqs.map(async (brief, index) => {
+      let mcq = state.exam.mcqCache[brief.id];
+      if (!mcq) {
+        mcq = await apiRequest(`/api/mcqs/${brief.id}`);
+        state.exam.mcqCache[brief.id] = mcq;
+      }
+      return { mcq, index };
+    });
+    
+    const results = await Promise.all(promises);
+    container.innerHTML = '';
+    
+    // Update progress tracker
+    updateExamProgress();
+    
+    results.forEach(({ mcq, index }) => {
+      const qCard = document.createElement('div');
+      qCard.className = 'content-card';
+      qCard.style.padding = '24px';
+      qCard.style.margin = '0';
+      qCard.style.border = '1px solid var(--border-color)';
+      qCard.style.borderRadius = 'var(--border-radius-sm)';
+      qCard.style.backgroundColor = 'var(--surface-tonal)';
+      
+      const selected = state.exam.answers[mcq.id] || '';
+      
+      let optionsHtml = '';
+      ['A', 'B', 'C', 'D'].forEach(key => {
+        const text = mcq.options[key] || '';
+        if (text) {
+          optionsHtml += `
+            <button class="option-btn exam-opt-btn-${mcq.id} ${selected === key ? 'selected' : ''}" 
+                    onclick="selectExamScrollOption(${mcq.id}, '${key}')" 
+                    id="exam-opt-${mcq.id}-${key}"
+                    style="margin-bottom: 8px; width: 100%;">
+              <span class="opt-letter">${key}</span>
+              <span class="opt-text">${text}</span>
+            </button>
+          `;
+        }
+      });
+      
+      qCard.innerHTML = `
+        <div class="runner-header" style="border-bottom: none; margin-bottom: 12px; padding: 0;">
+          <span class="session-badge" style="font-size: 13px;">Question ${index + 1}</span>
+          <span class="meta-tag difficulty-tag ${mcq.difficulty}">${mcq.difficulty.toUpperCase()}</span>
+        </div>
+        <h3 class="question-text" style="font-size: 17px; margin-bottom: 16px; font-family: 'Outfit', sans-serif; font-weight: 600; color: var(--text-main); line-height: 1.4;">${mcq.question}</h3>
+        <div class="options-grid" style="display: flex; flex-direction: column; gap: 8px;">
+          ${optionsHtml}
+        </div>
+      `;
+      container.appendChild(qCard);
+    });
+    
+  } catch (e) {
+    container.innerHTML = `<div style="text-align: center; color: var(--danger); font-weight: 600; padding: 20px;">Failed to load questions: ${e.message}</div>`;
+  }
+}
+
+function selectExamScrollOption(mcqId, key) {
+  state.exam.answers[mcqId] = key;
+  
+  // Highlight visually within this specific question card
+  document.querySelectorAll(`.exam-opt-btn-${mcqId}`).forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  const selectedBtn = document.getElementById(`exam-opt-${mcqId}-${key}`);
+  if (selectedBtn) {
+    selectedBtn.classList.add('selected');
+  }
+  
+  updateExamProgress();
+}
+
+function updateExamProgress() {
+  const total = state.exam.mcqs.length;
+  const answered = Object.keys(state.exam.answers).length;
+  
+  document.getElementById('exam-counter').textContent = `${answered} of ${total} Answered`;
+  document.getElementById('exam-progress-fill').style.width = `${(answered / total) * 100}%`;
+}
+
+function confirmSubmitExam() {
+  const total = state.exam.mcqs.length;
+  const answered = Object.keys(state.exam.answers).length;
+  if (answered === total) {
+    submitExam();
+    return;
+  }
+
+  if (confirm(`You have answered ${answered} out of ${total} questions. Are you sure you want to submit?`)) {
+    submitExam();
+  }
+}
+
+async function submitExam() {
+  if (state.exam.timerInterval) {
+    clearInterval(state.exam.timerInterval);
+  }
+  
+  const payload = state.exam.mcqs.map(q => ({
+    mcq_id: q.id,
+    selected_option: state.exam.answers[q.id] || ''
+  }));
+  
+  // 1. Immediately switch views to results summary with loading state
+  document.getElementById('exam-runner').classList.add('hidden');
+  document.getElementById('exam-results-summary').classList.remove('hidden');
+  
+  document.getElementById('exam-res-score').textContent = `--/--`;
+  document.getElementById('exam-res-pct').textContent = `...`;
+  document.getElementById('exam-res-time').textContent = `...`;
+  
+  const breakdown = document.getElementById('exam-res-topic-breakdown');
+  breakdown.innerHTML = `<div class="loading-placeholder"><p>Calculating topic accuracies...</p></div>`;
+  
+  const reviewContainer = document.getElementById('exam-res-questions-review');
+  reviewContainer.innerHTML = `<div class="loading-placeholder"><p>Loading question review...</p></div>`;
+  
+  // 2. Open the AI Analysis Drawer immediately in loading state
+  state.latestExamFeedback = null;
+  openAnalysisDrawer();
+  
+  // Set up progress steps animation sequence in the drawer loading view
+  const step1 = document.getElementById('step-1');
+  const step2 = document.getElementById('step-2');
+  const step3 = document.getElementById('step-3');
+  
+  let animationFinished = false;
+  
+  // Quick progression simulation for steps 1 and 2
+  setTimeout(() => {
+    if (step1) step1.className = 'progress-step completed';
+    if (step2) step2.className = 'progress-step active';
+    
+    setTimeout(() => {
+      if (step2) step2.className = 'progress-step completed';
+      if (step3) step3.className = 'progress-step active';
+      animationFinished = true;
+      checkAndShowAnalysis();
+    }, 1200);
+  }, 1000);
+  
+  let apiResponse = null;
+  
+  function checkAndShowAnalysis() {
+    if (animationFinished && apiResponse) {
+      if (step3) step3.className = 'progress-step completed';
+      
+      // Populate and show the analysis
+      const feedback = apiResponse.feedback || buildLocalExamFeedback(apiResponse);
+      state.latestExamFeedback = feedback;
+      state.latestExamAnswerAudit = buildExamAnswerAudit(apiResponse.details || []);
+      populateDrawerContent(feedback);
+      populateDrawerAnswerAudit(state.latestExamAnswerAudit);
+      
+      const loadingView = document.getElementById('drawer-loading-view');
+      const analysisView = document.getElementById('drawer-analysis-view');
+      if (loadingView) loadingView.classList.add('hidden');
+      if (analysisView) analysisView.classList.remove('hidden');
+    }
+  }
+
+  try {
+    const res = await apiRequest(`/api/exams/${state.exam.examId}/submit`, 'POST', payload);
+    apiResponse = res;
+    if (!apiResponse.feedback) {
+      apiResponse.feedback = buildLocalExamFeedback(apiResponse);
+    }
+    
+    // Update score metrics
+    const timeTaken = Math.round((Date.now() - state.exam.startTime) / 1000);
+    document.getElementById('exam-res-score').textContent = `${res.correct}/${res.total}`;
+    document.getElementById('exam-res-pct').textContent = `${res.score_percentage.toFixed(0)}%`;
+    document.getElementById('exam-res-time').textContent = `${timeTaken}s`;
+    
+    // Render per-topic breakdown
+    breakdown.innerHTML = '';
+    if (res.details && res.details.length > 0) {
+      const topicsAcc = {};
+      res.details.forEach(item => {
+        let topicName = 'General';
+        const cached = state.exam.mcqCache[item.mcq_id];
+        if (cached) {
+          topicName = cached.topic_name;
+        } else {
+          const brief = state.exam.mcqs.find(q => q.id === item.mcq_id);
+          if (brief) topicName = brief.topic_name;
+        }
+        
+        if (!topicsAcc[topicName]) {
+          topicsAcc[topicName] = { total: 0, correct: 0 };
+        }
+        topicsAcc[topicName].total++;
+        if (item.is_correct) {
+          topicsAcc[topicName].correct++;
+        }
+      });
+      
+      for (const [topic, s] of Object.entries(topicsAcc)) {
+        const pct = Math.round((s.correct / s.total) * 100);
+        const div = document.createElement('div');
+        div.className = 'summary-topic-bar-item';
+        div.innerHTML = `
+          <span class="topic-bar-label">${topic}</span>
+          <div style="flex: 1; margin: 0 20px;">
+            <div class="weak-progress-bar">
+              <div class="weak-progress-fill" style="width: ${pct}%; background-color: ${pct >= 60 ? 'var(--success)' : 'var(--danger)'}"></div>
+            </div>
+          </div>
+          <span class="topic-bar-percent">${s.correct}/${s.total} (${pct}%)</span>
+        `;
+        breakdown.appendChild(div);
+      }
+    } else {
+      breakdown.innerHTML = `<p class="muted-text">No detailed topic breakdown available.</p>`;
+    }
+    
+    // Render Detailed Question Review
+    reviewContainer.innerHTML = '';
+    res.details.forEach(item => {
+      const qCard = document.createElement('div');
+      qCard.className = `review-question-card ${item.is_correct ? 'correct-review' : 'wrong-review'}`;
+      qCard.id = `review-q-${item.mcq_id}`;
+      
+      let html = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+          <strong>Question ID: ${item.mcq_id}</strong>
+          <span style="color: ${item.is_correct ? 'var(--success)' : 'var(--danger)'}; font-weight: bold;">
+            ${item.is_correct ? '✓ Correct' : '✗ Incorrect'}
+          </span>
+        </div>
+      `;
+      
+      const cached = state.exam.mcqCache[item.mcq_id];
+      if (cached) {
+        html += renderReviewQuestionDetails(cached, item);
+      } else {
+        html += `
+          <div class="loading-placeholder" id="placeholder-${item.mcq_id}">
+            <p style="font-style: italic; color: var(--text-muted);">Loading question details...</p>
+          </div>
+        `;
+        fetchMCQForReview(item.mcq_id, item);
+      }
+      
+      qCard.innerHTML = html;
+      reviewContainer.appendChild(qCard);
+    });
+    
+    // If the animation has already finished, show the analysis right away. Otherwise, the animation callback will show it.
+    checkAndShowAnalysis();
+    
+    // Re-check exams completion status to unlock tabs
+    try {
+      const exams = await apiRequest('/api/exams');
+      const totalExams = exams.length;
+      const completedExams = exams.filter(ex => ex.is_completed);
+      state.examsLocked = totalExams > 0 && (completedExams.length < totalExams);
+      updateNavigationTabsLock();
+    } catch (err) {
+      console.warn("Failed to check exams completion status on submit", err);
+    }
+    
+  } catch (err) {
+    alert("Exam submission failed: " + err.message);
+    console.error(err);
+    
+    // Return to runner on error
+    document.getElementById('exam-runner').classList.remove('hidden');
+    document.getElementById('exam-results-summary').classList.add('hidden');
+    closeAnalysisDrawer();
+  }
+}
+
+function openAnalysisDrawer() {
+  const drawer = document.getElementById('exam-analysis-drawer');
+  if (!drawer) return;
+  
+  drawer.classList.remove('hidden');
+  
+  const loadingView = document.getElementById('drawer-loading-view');
+  const analysisView = document.getElementById('drawer-analysis-view');
+  
+  // Reset steps
+  const step1 = document.getElementById('step-1');
+  const step2 = document.getElementById('step-2');
+  const step3 = document.getElementById('step-3');
+  
+  if (step1) step1.className = 'progress-step active';
+  if (step2) step2.className = 'progress-step';
+  if (step3) step3.className = 'progress-step';
+  
+  // If we already have the feedback loaded, we simulate a quick interactive loading process
+  if (state.latestExamFeedback) {
+    loadingView.classList.remove('hidden');
+    analysisView.classList.add('hidden');
+    
+    // Simulate interactive analysis steps
+    setTimeout(() => {
+      if (step1) step1.className = 'progress-step completed';
+      if (step2) step2.className = 'progress-step active';
+      
+      setTimeout(() => {
+        if (step2) step2.className = 'progress-step completed';
+        if (step3) step3.className = 'progress-step active';
+        
+        setTimeout(() => {
+          if (step3) step3.className = 'progress-step completed';
+          populateDrawerContent(state.latestExamFeedback);
+          loadingView.classList.add('hidden');
+          analysisView.classList.remove('hidden');
+        }, 500);
+      }, 500);
+    }, 500);
+  } else {
+    loadingView.classList.remove('hidden');
+    analysisView.classList.add('hidden');
+  }
+}
+
+function closeAnalysisDrawer() {
+  const drawer = document.getElementById('exam-analysis-drawer');
+  if (drawer) {
+    drawer.classList.add('hidden');
+  }
+}
+
+function populateDrawerContent(feedback) {
+  if (!feedback) {
+    feedback = buildLocalExamFeedback({ total: 0, correct: 0, score_percentage: 0, details: [] });
+  }
+  
+  document.getElementById('drawer-feedback-summary').textContent = feedback.overall_summary || 'No overall summary provided.';
+  
+  const weakList = document.getElementById('drawer-feedback-weak');
+  weakList.innerHTML = '';
+  if (feedback.weak_topics && feedback.weak_topics.length > 0) {
+    feedback.weak_topics.forEach(w => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${w.topic_name}</strong> (${w.chapter_name}) — Accuracy: ${w.accuracy_percentage.toFixed(0)}%<br>
+                      <span style="color: var(--text-muted); font-size: 13px;">💡 Recommendations:</span>
+                      <ul style="padding-left: 15px; margin-top: 4px; list-style-type: circle;">
+                        ${w.focus_recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                      </ul>`;
+      weakList.appendChild(li);
+    });
+  } else {
+    weakList.innerHTML = '<li>None detected</li>';
+  }
+  
+  const strongList = document.getElementById('drawer-feedback-strong');
+  strongList.innerHTML = '';
+  if (feedback.strong_topics && feedback.strong_topics.length > 0) {
+    feedback.strong_topics.forEach(s => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${s.topic_name}</strong> (${s.chapter_name}) — Accuracy: ${s.accuracy_percentage.toFixed(0)}%<br>
+                      <span style="color: var(--success); font-style: italic; font-size: 13px;">✨ "${s.encouragement}"</span>`;
+      strongList.appendChild(li);
+    });
+  } else {
+    strongList.innerHTML = '<li>None detected</li>';
+  }
+  
+  const tipsList = document.getElementById('drawer-feedback-tips');
+  tipsList.innerHTML = '';
+  if (feedback.personalized_study_recommendations && feedback.personalized_study_recommendations.length > 0) {
+    feedback.personalized_study_recommendations.forEach(tip => {
+      const li = document.createElement('li');
+      li.textContent = tip;
+      tipsList.appendChild(li);
+    });
+  } else {
+    tipsList.innerHTML = '<li>No recommendations available.</li>';
+  }
+}
+
+function buildLocalExamFeedback(result) {
+  const total = result.total || 0;
+  const correct = result.correct || 0;
+  const pct = Number.isFinite(result.score_percentage) ? result.score_percentage : 0;
+  const topicStats = {};
+
+  (result.details || []).forEach(item => {
+    const mcq = state.exam.mcqCache[item.mcq_id] || state.exam.mcqs.find(q => q.id === item.mcq_id) || {};
+    const topicName = mcq.topic_name || 'General';
+    const chapterName = mcq.chapter_name || 'Unknown';
+    const key = `${chapterName}::${topicName}`;
+    if (!topicStats[key]) {
+      topicStats[key] = { topic_name: topicName, chapter_name: chapterName, total: 0, correct: 0 };
+    }
+    topicStats[key].total += 1;
+    if (item.is_correct) {
+      topicStats[key].correct += 1;
+    }
+  });
+
+  const weak_topics = [];
+  const strong_topics = [];
+  Object.values(topicStats).forEach(topic => {
+    const accuracy = topic.total ? (topic.correct / topic.total) * 100 : 0;
+    if (accuracy < 60) {
+      weak_topics.push({
+        topic_name: topic.topic_name,
+        chapter_name: topic.chapter_name,
+        accuracy_percentage: accuracy,
+        focus_recommendations: [
+          'Review the core definition and diagrams for this concept.',
+          'Redo each missed question and explain why the correct option wins.',
+          'Practice related MCQs before starting the next exam.'
+        ]
+      });
+    } else {
+      strong_topics.push({
+        topic_name: topic.topic_name,
+        chapter_name: topic.chapter_name,
+        accuracy_percentage: accuracy,
+        encouragement: 'You are answering this topic reliably. Keep it active with short reviews.'
+      });
+    }
+  });
+
+  weak_topics.sort((a, b) => a.accuracy_percentage - b.accuracy_percentage);
+  strong_topics.sort((a, b) => b.accuracy_percentage - a.accuracy_percentage);
+
+  let summary = `You answered ${correct}/${total} correctly (${Math.round(pct)}%). `;
+  if (total === 0) {
+    summary = 'No answers were submitted, so there is not enough data to analyze this exam.';
+  } else if (pct >= 80) {
+    summary += 'Strong result. Use the review below to clean up the remaining mistakes.';
+  } else if (pct >= 60) {
+    summary += 'Solid foundation. The fastest improvement is in the weak topics below.';
+  } else {
+    summary += 'This is useful diagnostic data. Start with wrong answers, then drill the related practice questions.';
+  }
+
+  return {
+    overall_summary: summary,
+    weak_topics: weak_topics.slice(0, 5),
+    strong_topics: strong_topics.slice(0, 5),
+    personalized_study_recommendations: [
+      'Review every incorrect answer before leaving this screen.',
+      'Write a one-line reason for each correct option.',
+      'Use related practice questions for the topics you missed.',
+      'Reattempt the wrong questions after a short break.',
+      'Keep strong topics in spaced review so they stay stable.'
+    ]
+  };
+}
+
+function buildExamAnswerAudit(details) {
+  return details.map((item, index) => {
+    const mcq = state.exam.mcqCache[item.mcq_id] || state.exam.mcqs.find(q => q.id === item.mcq_id) || {};
+    return {
+      index: index + 1,
+      mcq_id: item.mcq_id,
+      question: mcq.question || `Question ID ${item.mcq_id}`,
+      is_correct: item.is_correct,
+      selected_option: item.selected_option || 'Not answered',
+      correct_option: item.correct_option,
+      explanation: mcq.explanation || '',
+      practice_related_questions: item.practice_related_questions || []
+    };
+  });
+}
+
+function populateDrawerAnswerAudit(auditItems) {
+  const auditEl = document.getElementById('drawer-answer-audit');
+  if (!auditEl) return;
+
+  if (!auditItems || auditItems.length === 0) {
+    auditEl.innerHTML = '<p class="muted-text">No answer details are available for this exam.</p>';
+    return;
+  }
+
+  auditEl.innerHTML = auditItems.map(item => {
+    const related = (!item.is_correct && item.practice_related_questions.length > 0)
+      ? `<div class="drawer-audit-related">
+          ${item.practice_related_questions.slice(0, 3).map(q => `<span>${q}</span>`).join('')}
+        </div>`
+      : '';
+    const explanation = item.explanation
+      ? `<p class="drawer-audit-explanation">${item.explanation}</p>`
+      : '';
+
+    return `
+      <article class="drawer-audit-item ${item.is_correct ? 'is-correct' : 'is-wrong'}">
+        <div class="drawer-audit-topline">
+          <strong>Q${item.index}</strong>
+          <span>${item.is_correct ? 'Correct' : 'Wrong'}</span>
+        </div>
+        <p class="drawer-audit-question">${item.question}</p>
+        <div class="drawer-audit-options">
+          <span>Your answer: <strong>${item.selected_option}</strong></span>
+          <span>Correct answer: <strong>${item.correct_option}</strong></span>
+        </div>
+        ${explanation}
+        ${related}
+      </article>
+    `;
+  }).join('');
+}
+
+function renderReviewQuestionDetails(mcq, item) {
+  let explanationHtml = '';
+  if (mcq.explanation) {
+    explanationHtml = `
+      <div style="margin-top: 10px; padding: 10px; background-color: var(--surface-card); border-radius: 6px; font-size: 14px;">
+        <strong>Explanation:</strong> ${mcq.explanation}
+      </div>
+    `;
+  }
+  
+  let prqHtml = '';
+  if (!item.is_correct && item.practice_related_questions && item.practice_related_questions.length > 0) {
+    prqHtml = `
+      <div class="review-prq-list">
+        <h5>📚 Related Practice Questions to Review:</h5>
+        <ul>
+          ${item.practice_related_questions.map(qText => `<li>${qText}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+  
+  return `
+    <div style="font-weight: 600; font-size: 16px; margin-bottom: 12px; line-height: 1.5;">${mcq.question}</div>
+    <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 14px; margin-bottom: 12px;">
+      ${Object.entries(mcq.options).map(([key, text]) => {
+        let style = 'padding: 8px 12px; border-radius: 6px; background-color: var(--bg); border: 1px solid var(--border-color);';
+        let label = '';
+        if (key === mcq.correct_answer.option) {
+          style = 'padding: 8px 12px; border-radius: 6px; background-color: var(--success-bg); border: 1px solid var(--success); font-weight: 600;';
+          label = ' <span style="color: var(--success); font-size: 12px;">(Correct Answer)</span>';
+        } else if (key === item.selected_option && !item.is_correct) {
+          style = 'padding: 8px 12px; border-radius: 6px; background-color: var(--danger-bg); border: 1px solid var(--danger);';
+          label = ' <span style="color: var(--danger); font-size: 12px;">(Your Answer)</span>';
+        } else if (key === item.selected_option && item.is_correct) {
+          style = 'padding: 8px 12px; border-radius: 6px; background-color: var(--success-bg); border: 1px solid var(--success); font-weight: 600;';
+          label = ' <span style="color: var(--success); font-size: 12px;">(Your Answer)</span>';
+        }
+        return `<div style="${style}"><strong>${key}:</strong> ${text}${label}</div>`;
+      }).join('')}
+    </div>
+    ${explanationHtml}
+    ${prqHtml}
+  `;
+}
+
+async function fetchMCQForReview(mcqId, item) {
+  try {
+    const mcq = await apiRequest(`/api/mcqs/${mcqId}`);
+    state.exam.mcqCache[mcqId] = mcq;
+    const placeholder = document.getElementById(`placeholder-${mcqId}`);
+    if (placeholder) {
+      const card = placeholder.parentElement;
+      placeholder.remove();
+      const detailHtml = renderReviewQuestionDetails(mcq, item);
+      card.innerHTML += detailHtml;
+    }
+  } catch (e) {
+    console.error("Failed to load mcq details for review", e);
+    const placeholder = document.getElementById(`placeholder-${mcqId}`);
+    if (placeholder) {
+      placeholder.innerHTML = `<p style="color: var(--danger); font-style: italic;">Failed to load question details.</p>`;
+    }
+  }
+}
+
+// --- Profile Subview ---
+async function loadProfileStats() {
+  try {
+    const stats = await apiRequest('/api/student/stats');
+    document.getElementById('profile-stat-streak').textContent = stats.current_streak;
+    document.getElementById('profile-stat-answered').textContent = stats.total_answered;
+    document.getElementById('profile-stat-time').textContent = `${stats.avg_time_seconds.toFixed(1)}s`;
+    document.getElementById('profile-stat-exams').textContent = stats.exams_taken;
+    document.getElementById('profile-strong-topic').textContent = stats.strongest_topic || 'Not yet assessed';
+    document.getElementById('profile-weak-topic').textContent = stats.weakest_topic || 'Not yet assessed';
+  } catch (e) {
+    console.error("Failed to load profile stats", e);
+  }
+}
+
+// --- Analytics Subview ---
+async function loadAnalytics() {
+  try {
+    // 1. Topic heatmap stats
+    const allTopics = await apiRequest('/api/topics');
+    const topicStats = await apiRequest('/api/student/topic-stats');
+    
+    const statsMap = {};
+    topicStats.forEach(ts => {
+      statsMap[ts.topic_name] = ts;
+    });
+    
+    const grid = document.getElementById('analytics-heatmap-grid');
+    grid.innerHTML = '';
+    
+    allTopics.forEach(t => {
+      const stat = statsMap[t.topic_name];
+      let accuracyText = 'Unseen';
+      let cssClass = 'level-unseen';
+      
+      if (stat) {
+        const accuracy = stat.accuracy;
+        accuracyText = `${accuracy.toFixed(0)}%`;
+        if (accuracy < 20) cssClass = 'level-0-20';
+        else if (accuracy < 40) cssClass = 'level-20-40';
+        else if (accuracy < 60) cssClass = 'level-40-60';
+        else if (accuracy < 80) cssClass = 'level-60-80';
+        else cssClass = 'level-80-100';
+      }
+      
+      const cell = document.createElement('div');
+      cell.className = `heatmap-cell ${cssClass}`;
+      cell.onclick = () => startHeatmapTopicPractice(t.topic_name);
+      cell.innerHTML = `
+        <span class="cell-name" title="${t.topic_name}">${t.topic_name}</span>
+        <span class="cell-acc">${accuracyText}</span>
+      `;
+      grid.appendChild(cell);
+    });
+    
+    // 2. Confidence Matrix Counts
+    try {
+      const confProfile = await apiRequest('/api/student/confidence-profile');
+      document.getElementById('matrix-confident').textContent = confProfile.confident_master || 0;
+      document.getElementById('matrix-lucky-guess').textContent = confProfile.lucky_guess || 0;
+      document.getElementById('matrix-confident-wrong').textContent = confProfile.confident_mistake || 0;
+      document.getElementById('matrix-no-knowledge').textContent = confProfile.no_knowledge || 0;
+    } catch (err) {
+      console.error("Failed to load confidence profile", err);
+      document.getElementById('matrix-confident').textContent = 0;
+      document.getElementById('matrix-lucky-guess').textContent = 0;
+      document.getElementById('matrix-confident-wrong').textContent = 0;
+      document.getElementById('matrix-no-knowledge').textContent = 0;
+    }
+    
+    // 3. Fetch Semantic Confusion Clusters
+    try {
+      const confusionList = document.getElementById('confusion-clusters-list');
+      if (confusionList) {
+        const clusters = await apiRequest('/api/student/confusion-clusters');
+        if (clusters && clusters.length > 0) {
+          confusionList.innerHTML = '';
+          clusters.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'confusion-cluster-item';
+            
+            const srcQ = c.source_mcq;
+            const tgtQ = c.confused_with;
+            
+            item.innerHTML = `
+              <div class="confusion-cluster-header">
+                <span class="confusion-cluster-title">Concept Confusion Spotted</span>
+                <span class="confusion-cluster-tag">${c.wrong_count} Wrong Answers</span>
+              </div>
+              <div class="confusion-cluster-body">
+                <div class="vs-col">
+                  <span class="vs-col-label">Topic: ${c.topic}</span>
+                  <span class="vs-col-text">${srcQ.question}</span>
+                  <div style="margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--success);">
+                    Correct Answer: Option ${srcQ.correct}
+                  </div>
+                </div>
+                <div class="vs-col">
+                  <span class="vs-col-label">Confused With: ${tgtQ.topic}</span>
+                  <span class="vs-col-text">${tgtQ.question}</span>
+                  <div style="margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--primary);">
+                    Correct Answer: Option ${tgtQ.correct}
+                  </div>
+                </div>
+              </div>
+              <div class="confusion-cluster-explanation">
+                <strong>Diagnosis:</strong> ${c.explanation}
+              </div>
+            `;
+            confusionList.appendChild(item);
+          });
+        } else {
+          confusionList.innerHTML = `<div class="empty-state-message">No confusion clusters detected yet. Keep practicing to build your diagnostic map!</div>`;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load confusion clusters", err);
+    }
+    
+    // 4. Render Learning Curve Line Chart
+    renderLearningCurveChart();
+    
+  } catch (e) {
+    console.error("Analytics load failed", e);
+  }
+}
+
+function startHeatmapTopicPractice(topicName) {
+  if (confirm(`Do you want to start a 10-question practice session on "${topicName}"?`)) {
+    switchPortalTab('practice');
+    document.getElementById('practice-mode').value = 'adaptive';
+    document.getElementById('practice-count').value = 10;
+    
+    setTimeout(async () => {
+      const payload = {
+        mode: 'adaptive',
+        count: 10,
+        topic_name: topicName,
+        chapter_name: null
+      };
+      
+      try {
+        const sessionData = await apiRequest('/api/practice/session', 'POST', payload);
+        state.practice = {
+          sessionId: sessionData.session_id,
+          mcqs: sessionData.mcqs,
+          currentIndex: 0,
+          answers: [],
+          mode: 'adaptive'
+        };
+        document.getElementById('practice-session-badge').textContent = `ADAPTIVE MODE`;
+        document.getElementById('practice-setup-card').classList.add('hidden');
+        document.getElementById('practice-runner').classList.remove('hidden');
+        await loadPracticeMCQ();
+      } catch (e) {
+        alert("Failed to start session: " + e.message);
+      }
+    }, 100);
+  }
+}
+
+async function renderLearningCurveChart() {
+  const canvas = document.getElementById('learning-curve-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  if (state.learningCurveChart) {
+    state.learningCurveChart.destroy();
+  }
+  
+  let labels = [];
+  let dataset = [];
+  
+  try {
+    const timeline = await apiRequest('/api/student/timeline');
+    if (timeline && timeline.length > 0) {
+      timeline.forEach(item => {
+        const dateObj = new Date(item.date);
+        const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        labels.push(formattedDate);
+        dataset.push(Math.round(item.accuracy));
+      });
+    } else {
+      labels = ['Assessment Start'];
+      dataset = [0];
+    }
+  } catch (err) {
+    console.error("Failed to load timeline for chart", err);
+    labels = ['Error'];
+    dataset = [0];
+  }
+  
+  state.learningCurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Accuracy Progress (%)',
+        data: dataset,
+        borderColor: '#2B4C3F',
+        backgroundColor: 'rgba(43, 76, 63, 0.08)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(0, 0, 0, 0.03)'
+          },
+          ticks: {
+            color: '#78716C'
+          }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.03)'
+          },
+          ticks: {
+            color: '#78716C'
+          }
+        }
+      }
+    }
+  });
+}

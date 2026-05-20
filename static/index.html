@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shokti — Power your learning. Master the forgotten.</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Intelligent MCQ practice platform for Bangladeshi Medical and HSC Biology students utilizing SM-2 spaced repetition.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/static/styles.css">
+  
+  <!-- ChartJS for learning curve -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="app-container">
+    
+    <!-- ─────────────────────────────────────────────────────────────────────────
+         1. PUBLIC LANDING VIEW (#landing-view)
+         ───────────────────────────────────────────────────────────────────────── -->
+    <div id="landing-view" class="view-panel active">
+      <header class="landing-header">
+        <div class="landing-logo">⚡ Shokti</div>
+        <nav class="landing-nav">
+          <a href="#landing" onclick="scrollToSection('how-it-works')">How It Works</a>
+          <a href="#landing" onclick="scrollToSection('features')">Features</a>
+          <a href="#landing" onclick="scrollToSection('exams-preview')">Fixed Exams</a>
+        </nav>
+        <div class="landing-actions">
+          <button class="btn secondary-btn btn-sm" onclick="navigateToView('login')">Login</button>
+          <button class="btn primary-btn btn-sm" onclick="navigateToView('register')">Get Started</button>
+        </div>
+      </header>
+      
+      <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+          <h1 class="hero-title">Power your learning. <br><span>Master the forgotten.</span></h1>
+          <p class="hero-subtitle">Intelligent MCQ practice engine utilizing SM-2 spaced repetition for Bangladeshi Medical Admissions and HSC Biology.</p>
+          <div class="hero-cta">
+            <button class="btn primary-btn" onclick="navigateToView('register')">Create Free Account ⚡</button>
+          </div>
+        </section>
+        
+        <!-- How it Works Section -->
+        <section id="how-it-works" class="how-section">
+          <h2 class="section-title">How It Works</h2>
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-num">1</div>
+              <h3>Diagnostic Exams</h3>
+              <p>Take one of our fixed mock exams to assess your baseline strength across various topics.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-num">2</div>
+              <h3>Adaptive Practice</h3>
+              <p>The scheduler automatically structures daily reviews tailored to your memory decay rates.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-num">3</div>
+              <h3>Retain & Dominate</h3>
+              <p>Master weak points first and ensure high-yield medical biology questions stick in your mind forever.</p>
+            </div>
+          </div>
+        </section>
+        
+        <!-- Features Section -->
+        <section id="features" class="features-section">
+          <h2 class="section-title">Features Engineered for Mastery</h2>
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🧠</div>
+              <h3>SM-2 Spaced Repetition</h3>
+              <p>Custom interval scheduler reviews questions right before you are predicted to forget them.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🎯</div>
+              <h3>Weakness Targeting</h3>
+              <p>Identify weak topics like ব্রায়োফাইটা & Riccia and prioritize high-accuracy training sessions.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⏳</div>
+              <h3>Mock Exam Environment</h3>
+              <p>Practice under timed simulation constraints representing real entry test environments.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📈</div>
+              <h3>Progress Analytics</h3>
+              <p>Monitor your accuracy curves and knowledge retention levels with our high-end dashboard charts.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🤖</div>
+              <h3>Gemini AI Tutor</h3>
+              <p>Receive rich, personalized learning recommendations and qualitative exam reviews in Bangla.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📱</div>
+              <h3>Mobile-Optimized</h3>
+              <p>Study on the go with touch-friendly navigation options, progress meters, and dynamic layouts.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+      
+      <footer class="landing-footer">
+        <p>© 2026 Shokti. Built for premium learning. Made in BD 🇧🇩</p>
+      </footer>
+    </div>
+    
+    <!-- ─────────────────────────────────────────────────────────────────────────
+         2. AUTHENTICATION VIEW (#auth-view)
+         ───────────────────────────────────────────────────────────────────────── -->
+    <div id="auth-view" class="view-panel">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="logo">⚡ Shokti</div>
+          <p class="tagline">Power your learning. Master the forgotten.</p>
+        </div>
+        
+        <div class="auth-tabs">
+          <button id="tab-login-btn" class="auth-tab-btn active" onclick="switchAuthTab('login')">Login</button>
+          <button id="tab-register-btn" class="auth-tab-btn" onclick="switchAuthTab('register')">Sign Up</button>
+        </div>
+        
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" required placeholder="name@domain.com">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn primary-btn btn-full">Sign In</button>
+        </form>
+        
+        <!-- Register Form -->
+        <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label for="reg-name">Full Name</label>
+            <input type="text" id="reg-name" required placeholder="Swapnil Ahmed">
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Email Address</label>
+            <input type="email" id="reg-email" required placeholder="name@domain.com">
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" required placeholder="Minimum 6 characters">
+          </div>
+          <button type="submit" class="btn primary-btn btn-full">Create Account</button>
+        </form>
+        
+        <div id="auth-error" class="auth-error-msg hidden"></div>
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="#landing" onclick="navigateToView('landing')" style="font-size: 14px; color: var(--text-muted);">← Back to Home</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ─────────────────────────────────────────────────────────────────────────
+         3. MAIN PORTAL VIEW (Hidden initially)
+         ───────────────────────────────────────────────────────────────────────── -->
+    <div id="portal-view" class="view-panel">
+      <!-- Navigation Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <span class="logo" onclick="switchPortalTab('dashboard')" style="cursor: pointer;">⚡ Shokti</span>
+        </div>
+        <div class="header-right">
+          <div class="user-stats">
+            <span class="stat-badge" title="Active Streak"><span class="badge-icon">🔥</span> <span id="header-streak">0</span> days</span>
+            <span class="stat-badge" title="Total Answered"><span class="badge-icon">🎯</span> <span id="header-answered">0</span></span>
+          </div>
+          <span class="user-name" id="user-profile-name">Student</span>
+          <button class="btn secondary-btn btn-sm" onclick="handleLogout()">Logout</button>
+        </div>
+      </header>
+      
+      <!-- Primary Navigation Tabs -->
+      <nav class="app-nav">
+        <button id="nav-dashboard" class="nav-tab active" onclick="switchPortalTab('dashboard')">Dashboard</button>
+        <button id="nav-practice" class="nav-tab" onclick="switchPortalTab('practice')">Practice Session</button>
+        <button id="nav-exams" class="nav-tab" onclick="switchPortalTab('exams')">Fixed Exams</button>
+        <button id="nav-analytics" class="nav-tab" onclick="switchPortalTab('analytics')">Analytics</button>
+        <button id="nav-profile" class="nav-tab" onclick="switchPortalTab('profile')">Profile</button>
+      </nav>
+      
+      <!-- Content Container -->
+      <main class="app-content">
+        
+        <!-- A. Dashboard Tab -->
+        <section id="tab-dashboard" class="portal-tab-content active">
+          <div class="dashboard-grid">
+            
+            <div class="dash-card main-cta-card">
+              <h2>Ready to practice?</h2>
+              <p>Keep your streak alive. The scheduler has selected optimized questions for your review intervals.</p>
+              <div class="cta-actions">
+                <button class="btn primary-btn" onclick="startQuickPractice('adaptive')">Start Smart Practice ⚡</button>
+                <button class="btn secondary-btn" onclick="startQuickPractice('weakness')">Focus Weak Areas</button>
+              </div>
+            </div>
+            
+            <div class="dash-card stats-overview-card">
+              <h3>Weakest Topics</h3>
+              <div id="weak-topics-list" class="dashboard-weak-list">
+                <p class="muted-text">Great job! No weak topics found yet. Take a diagnostic or mock exam to populate your stats.</p>
+              </div>
+            </div>
+            
+            <div class="dash-card exam-streak-card">
+              <h3>Exam Status</h3>
+              <p>Prepare for real Admissions. Complete all mock exams to unlock automatic parameter tuning.</p>
+              <div class="mini-exam-list" id="dashboard-exam-shortcuts">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+            
+          </div>
+        </section>
+        
+        <!-- B. Practice Tab -->
+        <section id="tab-practice" class="portal-tab-content">
+          <!-- Session Settings Form -->
+          <div id="practice-setup-card" class="content-card">
+            <h2>Custom Practice Session</h2>
+            <p class="muted-text">Build a personalized training session targeting specific subjects or chapters.</p>
+            
+            <div class="setup-grid">
+              <div class="form-group">
+                <label for="practice-mode">Session Mode</label>
+                <select id="practice-mode">
+                  <option value="adaptive">Smart Adaptive (SM-2 + Weakness + Trends)</option>
+                  <option value="weakness">Weakness Focus (Focus on low-accuracy topics)</option>
+                  <option value="coverage">Coverage Booster (Select unseen questions first)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="practice-count">Question Count</label>
+                <select id="practice-count">
+                  <option value="5">5 Questions (Quick review)</option>
+                  <option value="10">10 Questions</option>
+                  <option value="20" selected>20 Questions (Standard)</option>
+                  <option value="30">30 Questions</option>
+                  <option value="40">40 Questions (Deep session)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="practice-subject">Subject Filter</label>
+                <select id="practice-subject" onchange="loadSubjectBooks(this.value)">
+                  <option value="">All Subjects</option>
+                </select>
+              </div>
+ 
+              <div class="form-group">
+                <label for="practice-book">Book Filter</label>
+                <select id="practice-book" onchange="loadBookChapters(this.value)" disabled>
+                  <option value="">All Books</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="practice-chapter">Chapter Filter</label>
+                <select id="practice-chapter" onchange="loadChapterTopics(this.value)" disabled>
+                  <option value="">All Chapters</option>
+                </select>
+              </div>
+ 
+              <div class="form-group">
+                <label for="practice-topic">Topic Filter</label>
+                <select id="practice-topic" disabled>
+                  <option value="">All Topics</option>
+                </select>
+              </div>
+            </div>
+            
+            <button class="btn primary-btn btn-full" onclick="launchPracticeSession()">Launch Session 🚀</button>
+          </div>
+          
+          <!-- Interactive Session Runner -->
+          <div id="practice-runner" class="content-card hidden readable-width-container">
+            <div class="runner-header">
+              <span class="session-badge" id="practice-session-badge">Adaptive Mode</span>
+              <span class="question-progress" id="practice-question-counter">Question 1 of 10</span>
+              <button class="btn danger-btn btn-sm" onclick="confirmEndSession()">End Session</button>
+            </div>
+            
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="practice-progress-fill"></div>
+            </div>
+            
+            <div class="question-box">
+              <div class="question-metadata">
+                <span class="meta-tag" id="q-topic-tag">Topic</span>
+                <span class="meta-tag difficulty-tag" id="q-difficulty-tag">Medium</span>
+              </div>
+              <h1 class="question-text" id="q-text">Question text</h1>
+            </div>
+            
+            <div class="options-grid" id="q-options">
+              <button class="option-btn" onclick="selectOption('A')"><span class="opt-letter">A</span> <span class="opt-text">Option A</span></button>
+              <button class="option-btn" onclick="selectOption('B')"><span class="opt-letter">B</span> <span class="opt-text">Option B</span></button>
+              <button class="option-btn" onclick="selectOption('C')"><span class="opt-letter">C</span> <span class="opt-text">Option C</span></button>
+              <button class="option-btn" onclick="selectOption('D')"><span class="opt-letter">D</span> <span class="opt-text">Option D</span></button>
+            </div>
+            
+            <!-- Immediate feedback reveal card -->
+            <div id="feedback-card" class="feedback-card hidden">
+              <div class="feedback-status" id="feedback-status-heading">
+                <span class="feedback-icon" id="feedback-icon-val">✅</span>
+                <span class="status-msg" id="feedback-status-text">Correct!</span>
+              </div>
+              
+              <div class="explanation-box">
+                <strong>Explanation & Info:</strong>
+                <div id="explanation-text">Explanation content.</div>
+              </div>
+              
+              <div class="feedback-footer">
+                <span class="review-schedule" id="next-review-badge">⚡ Scheduled review: 3 days</span>
+                <button class="btn primary-btn" id="next-question-btn" onclick="goToNextQuestion()">Next Question ➡️</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Session Summary Dashboard -->
+          <div id="session-summary" class="content-card hidden readable-width-container">
+            <div class="summary-congrats">
+              <span class="congrats-emoji">🏆</span>
+              <h2>Session Complete!</h2>
+              <p>You've completed your adaptive practice session.</p>
+            </div>
+            
+            <div class="summary-stats-row">
+              <div class="summary-stat-box">
+                <span class="stat-val" id="summary-correct-ratio">0/0</span>
+                <span class="stat-lbl">Questions</span>
+              </div>
+              <div class="summary-stat-box">
+                <span class="stat-val" id="summary-percentage">0%</span>
+                <span class="stat-lbl">Accuracy</span>
+              </div>
+              <div class="summary-stat-box">
+                <span class="stat-val" id="summary-avg-time">0s</span>
+                <span class="stat-lbl">Avg Response Time</span>
+              </div>
+            </div>
+            
+            <div class="summary-section">
+              <h3>Performance by Topic</h3>
+              <div class="summary-topic-bars" id="summary-topic-breakdown">
+                <!-- Dynamic bars -->
+              </div>
+            </div>
+            
+            <div class="summary-actions">
+              <button class="btn primary-btn" onclick="resetPracticeTab()">Start New Session</button>
+              <button class="btn secondary-btn" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
+            </div>
+          </div>
+        </section>
+        
+        <!-- C. Fixed Exams Tab -->
+        <section id="tab-exams" class="portal-tab-content">
+          <!-- Exams Selection Grid -->
+          <div id="exams-list-container">
+            <h2>Fixed Diagnostic & Mock Exams</h2>
+            <p class="muted-text">Simulated mock tests covering specific chapters or biology categories with timers.</p>
+            <div class="exams-grid" id="exams-grid-data">
+              <!-- Seeded exam cards loaded here -->
+            </div>
+          </div>
+          
+          <!-- Exam Runner Panel -->
+          <div id="exam-runner" class="content-card hidden readable-width-container">
+            <div class="runner-header" style="position: sticky; top: 0; background-color: var(--surface); z-index: 10; padding: 12px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 20px;">
+              <span class="session-badge" id="exam-runner-title">Diagnostic Exam 1</span>
+              <span class="timer-badge" id="exam-timer">Time Left: 30:00</span>
+              <span class="question-progress" id="exam-counter">0 of 30 Answered</span>
+            </div>
+            
+            <div class="progress-bar-container" style="margin-bottom: 24px;">
+              <div class="progress-bar-fill" id="exam-progress-fill"></div>
+            </div>
+            
+            <!-- Scrollable list of questions -->
+            <div id="exam-scrollable-questions-container" class="exam-scrollable-container" style="display: flex; flex-direction: column; gap: 30px;">
+              <!-- Loaded dynamically -->
+            </div>
+            
+              <div class="exam-nav-actions" style="justify-content: center; margin-top: 36px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+              <button class="btn success-btn" id="exam-submit-btn" onclick="confirmSubmitExam()" style="width: 100%; max-width: 400px; font-size: 16px; padding: 14px 28px; border-radius: var(--border-radius-sm);">Submit Exam</button>
+            </div>
+          </div>
+          
+          <!-- Exam Results Summary -->
+          <div id="exam-results-summary" class="content-card hidden">
+            <div class="summary-congrats">
+              <span class="congrats-emoji">📊</span>
+              <h2 id="exam-result-title">Exam Results</h2>
+              <p>Review your score and view personalized AI insights below.</p>
+            </div>
+            
+            <div class="summary-stats-row">
+              <div class="summary-stat-box">
+                <span class="stat-val" id="exam-res-score">0/0</span>
+                <span class="stat-lbl">Final Score</span>
+              </div>
+              <div class="summary-stat-box">
+                <span class="stat-val" id="exam-res-pct">0%</span>
+                <span class="stat-lbl">Percentage</span>
+              </div>
+              <div class="summary-stat-box">
+                <span class="stat-val" id="exam-res-time">0s</span>
+                <span class="stat-lbl">Total Time</span>
+              </div>
+            </div>
+
+            <!-- Reopen AI Analysis Drawer Button -->
+             <div style="text-align: center; margin: 24px 0;">
+               <button class="btn primary-btn" onclick="openAnalysisDrawer()" style="font-size: 16px; padding: 12px 32px; border-radius: 30px; box-shadow: var(--shadow-elevated); display: inline-flex; align-items: center; gap: 8px;">🤖 Open AI Tutor Analysis</button>
+             </div>
+
+            
+            <div class="summary-section">
+              <h3>Per-Topic Accuracy</h3>
+              <div class="summary-topic-bars" id="exam-res-topic-breakdown">
+                <!-- Topic bars filled dynamically -->
+              </div>
+            </div>
+
+            <!-- Question Review section with practice related questions -->
+            <div class="review-answers-box">
+              <h3>Detail Question Review</h3>
+              <p class="muted-text">Incorrect questions display related mock practice questions to try.</p>
+              <div id="exam-res-questions-review">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+            
+            <div class="summary-actions" style="margin-top: 30px;">
+              <button class="btn primary-btn" onclick="resetExamsTab()">Back to Exams List</button>
+              <button class="btn secondary-btn" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
+            </div>
+          </div>
+        </section>
+        
+        <!-- D. Analytics Tab -->
+        <section id="tab-analytics" class="portal-tab-content">
+          <div class="analytics-layout">
+            
+            <!-- Learning curve chart -->
+            <div class="content-card chart-card">
+              <h2>Learning Curve</h2>
+              <p class="muted-text">Accuracy percentage over time across all practice sessions.</p>
+              <div class="chart-container">
+                <canvas id="learning-curve-canvas"></canvas>
+              </div>
+            </div>
+            
+            <!-- Topic heatmaps -->
+            <div class="content-card heatmap-card">
+              <h2>Knowledge Retention Map</h2>
+              <p class="muted-text">Visual representation of topic mastery. Click topics to target practice.</p>
+              <div class="heatmap-grid" id="analytics-heatmap-grid">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+            
+            <!-- Confidence speed matrix -->
+            <div class="content-card confidence-card">
+              <h2>Response Speed Matrix</h2>
+              <p class="muted-text">Inferred confidence levels mapped by answer correctness and response timing.</p>
+              <div class="matrix-grid">
+                <div class="matrix-cell success-pulse">
+                  <span class="cell-title">Lucky Guess</span>
+                  <span class="cell-desc">Fast response, correct answer</span>
+                  <span class="cell-val" id="matrix-lucky-guess">0</span>
+                </div>
+                <div class="matrix-cell accent-pulse">
+                  <span class="cell-title">Confident Master</span>
+                  <span class="cell-desc">Slow response, correct answer</span>
+                  <span class="cell-val" id="matrix-confident">0</span>
+                </div>
+                <div class="matrix-cell danger-pulse">
+                  <span class="cell-title">Confident Mistake</span>
+                  <span class="cell-desc">Fast response, wrong answer</span>
+                  <span class="cell-val" id="matrix-confident-wrong">0</span>
+                </div>
+                <div class="matrix-cell dark-pulse">
+                  <span class="cell-title">No Knowledge</span>
+                  <span class="cell-desc">Slow response, wrong answer</span>
+                  <span class="cell-val" id="matrix-no-knowledge">0</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Semantic Concept Confusion Clusters -->
+            <div class="content-card confidence-card" id="confusion-clusters-section">
+              <h2>Concept Confusion Clusters</h2>
+              <p class="muted-text">Semantic analysis of patterns where you confuse similar-sounding or related concepts (e.g. Archegonium vs Antheridium).</p>
+              <div id="confusion-clusters-list" class="confusion-list-container">
+                <div class="empty-state-message">No confusion clusters detected yet. Keep practicing to build your diagnostic map!</div>
+              </div>
+            </div>
+            
+          </div>
+        </section>
+        
+        <!-- E. Profile Tab -->
+        <section id="tab-profile" class="portal-tab-content">
+          <div class="profile-layout" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: start;">
+            
+            <!-- Left Panel: Avatar & Info -->
+            <div class="content-card profile-card" style="text-align: center; padding: 30px;">
+              <div class="profile-avatar" id="profile-avatar-initial" style="width: 90px; height: 90px; border-radius: 50%; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; margin: 0 auto 20px auto;">S</div>
+              <h2 id="profile-user-name" style="margin: 0 0 4px 0; font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700; color: var(--text-main);">Student Name</h2>
+              <p class="muted-text" id="profile-user-email" style="margin: 0 0 24px 0; font-size: 14px; color: var(--text-muted);">email@domain.com</p>
+              
+              <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <span class="meta-tag" style="background-color: var(--primary-bg); color: var(--primary); padding: 6px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;">Standard Student Tier</span>
+              </div>
+              
+              <button class="btn danger-btn" style="margin-top: 30px; width: 100%; border-radius: var(--border-radius-sm);" onclick="handleLogout()">Sign Out Account</button>
+            </div>
+            
+            <!-- Right Panel: Academic Analytics Summary -->
+            <div class="content-card" style="padding: 30px;">
+              <h3 style="margin-top: 0; margin-bottom: 20px; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">Academic Performance & Activity</h3>
+              
+              <div class="profile-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+                
+                <div style="background-color: var(--surface-tonal); padding: 18px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                  <span class="muted-text" style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 8px;">Learning Streak</span>
+                  <div style="display: flex; align-items: baseline; gap: 6px;">
+                    <span style="font-size: 24px; font-weight: 700; color: var(--text-main);" id="profile-stat-streak">0</span>
+                    <span style="font-size: 13px; color: var(--text-muted);">consecutive days</span>
+                  </div>
+                </div>
+                
+                <div style="background-color: var(--surface-tonal); padding: 18px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                  <span class="muted-text" style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 8px;">Total MCQ Practice</span>
+                  <div style="display: flex; align-items: baseline; gap: 6px;">
+                    <span style="font-size: 24px; font-weight: 700; color: var(--text-main);" id="profile-stat-answered">0</span>
+                    <span style="font-size: 13px; color: var(--text-muted);">questions attempted</span>
+                  </div>
+                </div>
+
+                <div style="background-color: var(--surface-tonal); padding: 18px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                  <span class="muted-text" style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 8px;">Average Time / MCQ</span>
+                  <div style="display: flex; align-items: baseline; gap: 6px;">
+                    <span style="font-size: 24px; font-weight: 700; color: var(--text-main);" id="profile-stat-time">0.0s</span>
+                    <span style="font-size: 13px; color: var(--text-muted);">per question</span>
+                  </div>
+                </div>
+
+                <div style="background-color: var(--surface-tonal); padding: 18px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                  <span class="muted-text" style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 8px;">Fixed Exams Completed</span>
+                  <div style="display: flex; align-items: baseline; gap: 6px;">
+                    <span style="font-size: 24px; font-weight: 700; color: var(--text-main);" id="profile-stat-exams">0</span>
+                    <span style="font-size: 13px; color: var(--text-muted);">exams submitted</span>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <h3 style="margin-top: 0; margin-bottom: 20px; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">Top Knowledge Strengths & Weaknesses</h3>
+              
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background-color: var(--success-bg); border-radius: var(--border-radius-sm); border: 1px solid rgba(46, 125, 50, 0.15);">
+                  <div>
+                    <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--success); display: block; margin-bottom: 4px;">🏆 Strongest Concept Topic</span>
+                    <span style="font-size: 15px; font-weight: 600; color: var(--text-main);" id="profile-strong-topic">Not yet assessed</span>
+                  </div>
+                  <span style="font-size: 24px;">📈</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background-color: var(--danger-bg); border-radius: var(--border-radius-sm); border: 1px solid rgba(198, 40, 40, 0.15);">
+                  <div>
+                    <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--danger); display: block; margin-bottom: 4px;">⚠️ Weakest Concept Topic</span>
+                    <span style="font-size: 15px; font-weight: 600; color: var(--text-main);" id="profile-weak-topic">Not yet assessed</span>
+                  </div>
+                  <span style="font-size: 24px;">📉</span>
+                </div>
+              </div>
+
+            </div>
+            
+          </div>
+        </section>
+        
+      </main>
+    </div>
+    
+  </div>
+  
+  <!-- Right-Side AI Tutor Analysis Drawer -->
+  <div id="exam-analysis-drawer" class="analysis-drawer hidden">
+    <div class="analysis-drawer-backdrop" onclick="closeAnalysisDrawer()"></div>
+    <div class="analysis-drawer-content">
+      <div class="analysis-drawer-header">
+        <h3>🤖 AI Tutor Insights</h3>
+        <button class="drawer-close-btn" onclick="closeAnalysisDrawer()">&times;</button>
+      </div>
+      <div class="analysis-drawer-body">
+        
+        <!-- Loading Screen with Animation & Blurred Background -->
+        <div id="drawer-loading-view" class="drawer-loading-card">
+          <div class="drawer-blur-overlay"></div>
+          <div class="drawer-loading-content">
+            <div class="tutor-pulse-icon">🤖</div>
+            <div class="tutor-loading-spinner"></div>
+            <h4>Synthesizing Performance Data...</h4>
+            <p>Our AI Tutor is evaluating your answer patterns, classifying questions using Bloom's Taxonomy, and curating customized learning insights.</p>
+            <div class="loading-progress-steps">
+              <div class="step-line"></div>
+              <div class="progress-step active" id="step-1">1. Scanning answers</div>
+              <div class="progress-step" id="step-2">2. Checking accuracy</div>
+              <div class="progress-step" id="step-3">3. Generating tutoring plan</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Completed Analysis View -->
+        <div id="drawer-analysis-view" class="hidden">
+          <div class="drawer-summary-card">
+            <h4>Quantitative Performance Summary</h4>
+            <p id="drawer-feedback-summary">Summary text goes here...</p>
+          </div>
+
+          <div class="drawer-list-card answer-audit-card">
+            <h5>Answer Audit</h5>
+            <div id="drawer-answer-audit" class="drawer-answer-audit">
+              <!-- Dynamic -->
+            </div>
+          </div>
+          
+          <div class="drawer-list-card weak-card">
+            <h5>📉 Concepts Needing Fixes</h5>
+            <ul id="drawer-feedback-weak">
+              <!-- Dynamic -->
+            </ul>
+          </div>
+          
+          <div class="drawer-list-card strong-card">
+            <h5>📈 Key Strengths & Praise</h5>
+            <ul id="drawer-feedback-strong">
+              <!-- Dynamic -->
+            </ul>
+          </div>
+          
+          <div class="drawer-list-card plan-card">
+            <h5>📚 Personalized Study Plan</h5>
+            <ul id="drawer-feedback-tips">
+              <!-- Dynamic -->
+            </ul>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Application Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
