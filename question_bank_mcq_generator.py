@@ -19,6 +19,8 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 
+from shokti.core.config import GEMINI
+
 # ---------------------------------------------------------------------------
 # Paths & Config
 # ---------------------------------------------------------------------------
@@ -27,13 +29,8 @@ ROOT = Path(__file__).resolve().parent
 ENV_FILE = ROOT / ".env"
 OUTPUT_DIR = ROOT / "question_bank"
 
-# Medical Qbank store — auto-detected from .store_name_medical
-STORE_NAME_FILE = ROOT / ".store_name_medical"
-if STORE_NAME_FILE.exists():
-    MEDICAL_STORE_NAME = STORE_NAME_FILE.read_text().strip()
-else:
-    MEDICAL_STORE_NAME = "fileSearchStores/freemedicalqbank-lnxjz27ui0b7"
-MODEL = "gemini-2.5-flash"
+MEDICAL_STORE_NAME = GEMINI.STORE_NAME
+MODEL = GEMINI.MODEL
 BATCH_SIZE = 100
 
 CHAPTER_JOBS = [

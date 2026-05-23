@@ -63,6 +63,12 @@ async def start_session(
 
     mcqs, comp = await asyncio.to_thread(_sync_build)
 
+    if not mcqs:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Not enough questions are available yet. Please add questions or try another topic.",
+        )
+
     return PracticeSessionResponse(
         session_id=session_id,
         mode=req.mode,

@@ -1,7 +1,10 @@
 """Exam router: list exams, start sessions, submit attempts, and fetch feedback."""
 import asyncio
 import json
+import logging
+import sqlite3
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
@@ -13,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shokti.api.auth import get_current_student
 from shokti.api.db import async_session
 from shokti.api.deps import get_current_student_dep, get_db_dep
+from shokti.core.config import DB_PATH, MCQ
 from shokti.api.models import Student
 from shokti.api.schemas import (
     ExamAnswerDetailWithPractice,
@@ -186,6 +190,111 @@ async def get_exam(exam_id: str = Path(pattern=r"^\d+$")):
     )
 
 
+logger = logging.getLogger(__name__)
+
+
+def _should_generate_for_exam(exam_id: str) -> bool:
+    """Return True if Gemini generation is enabled for this exam type."""
+    if not getattr(MCQ, "ENABLE_GEMINI_GENERATION_FOR_EXAMS", True):
+        return False
+    if exam_id in ("1", "2", "3"):
+        return getattr(MCQ, "ENABLE_GEMINI_GENERATION_FOR_FIXED_EXAMS", True)
+    # All other exam IDs (including 'mock' references via startShortcutExam) use mock test logic
+    return getattr(MCQ, "ENABLE_GEMINI_GENERATION_FOR_MOCK_TEST", True)
+
+
+async def _generate_exam_mcqs(db: AsyncSession, exam: dict) -> list:
+    """
+    Generate MCQs for an exam using Gemini. Runs in a thread pool since gap_filler
+    uses synchronous sqlite3. Returns list of MCQListItem dicts on success,
+    or raises an exception on failure.
+    """
+    target_count = exam.get("total_mcqs", 30)
+    chapter_ids = exam.get("chapter_ids", [])
+    chapter_names = exam.get("chapter_names", [])
+    # Build a topic filter from available topics in DB, or use first available
+    topic_filter = None
+    if chapter_ids:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT topic_id, topic_name, chapter_id, chapter_name, book_page_range, source_file "
+            "FROM question_bank WHERE chapter_id = ? LIMIT 1",
+            (chapter_ids[0],),
+        ).fetchone()
+        conn.close()
+        if row:
+            topic_filter = dict(row)
+
+    if not topic_filter:
+        raise RuntimeError("No topic data available for generation")
+
+    def _worker() -> list[dict]:
+        from shokti.generators.gap_filler import generate_fresh_mcqs, setup_generator
+        import json
+
+        worker_conn = sqlite3.connect(DB_PATH)
+        worker_conn.row_factory = sqlite3.Row
+        try:
+            client, store_name, gen_config, cite_config = setup_generator()
+            _, mcq_rows = generate_fresh_mcqs(
+                topic_name=topic_filter["topic_name"],
+                chapter_id=topic_filter["chapter_id"],
+                chapter_name=topic_filter["chapter_name"],
+                book_page_range=topic_filter.get("book_page_range") or "",
+                source_file=topic_filter.get("source_file") or "",
+                count=target_count,
+                conn=worker_conn,
+                client=client,
+                store_name=store_name,
+                gen_config=gen_config,
+                cite_config=cite_config,
+                practice_context=None,
+                allow_existing_fallback=False,
+            )
+            return mcq_rows
+        finally:
+            worker_conn.close()
+
+    logger.info(f"Starting Gemini question generation for exam {exam.get('exam_id', '?')}")
+    executor = ThreadPoolExecutor(max_workers=1)
+    try:
+        future = executor.submit(_worker)
+        timeout = getattr(MCQ, "FRESH_GENERATION_MAX_WAIT_SECONDS", 120)
+        mcq_rows = future.result(timeout=timeout)
+        executor.shutdown(wait=False, cancel_futures=True)
+    except TimeoutError:
+        executor.shutdown(wait=False, cancel_futures=True)
+        logger.warning(f"Gemini generation timed out for exam {exam.get('exam_id', '?')}")
+        raise RuntimeError("Generation timed out")
+    except Exception as exc:
+        executor.shutdown(wait=False, cancel_futures=True)
+        logger.warning(f"Gemini generation failed for exam {exam.get('exam_id', '?')}: {exc}")
+        raise
+
+    logger.info(f"Generated {len(mcq_rows)} questions from Gemini for exam {exam.get('exam_id', '?')}")
+
+    # Normalize rows into MCQListItem format
+    result = []
+    for m in mcq_rows:
+        opts = m.get("options")
+        if isinstance(opts, str):
+            opts = json.loads(opts)
+        ca = m.get("correct_answer")
+        if isinstance(ca, str):
+            ca = json.loads(ca)
+        result.append({
+            "id": m["id"],
+            "chapter_id": m.get("chapter_id") or "",
+            "chapter_name": m.get("chapter_name") or "",
+            "topic_id": m.get("topic_id") or "",
+            "topic_name": m.get("topic_name") or "",
+            "difficulty": m.get("difficulty", "medium"),
+            "book_page_range": m.get("book_page_range") or "",
+        })
+    return result
+
+
 @router.post("/{exam_id}/start", response_model=ExamStartResponse)
 async def start_exam(
     exam_id: str = Path(pattern=r"^\d+$"),
@@ -197,7 +306,28 @@ async def start_exam(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
 
     exam = load_exam(exam_id)
+
+    # Attempt Gemini generation first
+    if _should_generate_for_exam(exam_id):
+        try:
+            rows = await _generate_exam_mcqs(db, exam)
+            if rows:
+                return ExamStartResponse(
+                    session_id=str(uuid.uuid4()),
+                    exam_id=exam_id,
+                    mcqs=[MCQListItem.model_validate(r) for r in rows],
+                    duration_minutes=exam.get("duration_minutes", 30),
+                )
+        except Exception as e:
+            logger.warning(f"Gemini generation failed for exam {exam_id}, falling back to DB: {e}")
+
+    # Fallback: load from DB
     rows = await _load_fixed_exam_mcqs(db, exam)
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Not enough questions are available yet. Please add questions or try again later.",
+        )
     return ExamStartResponse(
         session_id=str(uuid.uuid4()),
         exam_id=exam_id,

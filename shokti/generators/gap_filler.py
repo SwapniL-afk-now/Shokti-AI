@@ -217,12 +217,13 @@ def select_file_search_store(client):
 
 
 def insert_mcqs(conn, mcqs, topic_data):
-    inserted = 0
+    inserted_count = 0
+    inserted_rows = []
     for mcq in mcqs:
         options_json = json.dumps(mcq.get("options", {}), ensure_ascii=False)
         correct_json = json.dumps(mcq.get("correct_answer", {}), ensure_ascii=False)
         try:
-            conn.execute("""
+            cursor = conn.execute("""
                 INSERT INTO question_bank (
                     subject, book_id, chapter_id, chapter_name, book_page_range, source_file,
                     topic_id, topic_name, question, options, correct_answer,
@@ -239,16 +240,32 @@ def insert_mcqs(conn, mcqs, topic_data):
                 json.dumps(mcq.get("practice_related_questions", []), ensure_ascii=False),
                 0, mcq.get("difficulty", "medium"), "generated",
             ))
-            inserted += 1
+            inserted_count += 1
+            inserted_rows.append({
+                "id": cursor.lastrowid,
+                "chapter_id": topic_data["chapter_id"],
+                "chapter_name": topic_data["chapter_name"],
+                "topic_id": topic_data["topic_id"],
+                "topic_name": topic_data["topic_name"],
+                "question": mcq.get("question"),
+                "options": mcq.get("options"),
+                "correct_answer": mcq.get("correct_answer"),
+                "explanation": mcq.get("explanation"),
+                "difficulty": mcq.get("difficulty", "medium"),
+                "book_page_range": topic_data.get("book_page_range"),
+                "source_quote": mcq.get("source_quote", ""),
+                "pdf_page_number": mcq.get("pdf_page_number"),
+                "origin": "generated",
+            })
         except sqlite3.IntegrityError:
             print(f"    Skipping duplicate: {mcq.get('question', '')[:50]}...")
     conn.commit()
-    return inserted
+    return inserted_count, inserted_rows
 
 
 def fill_topic(gap: dict, conn: sqlite3.Connection, client, store_name: str,
                gen_config, cite_config, count: int | None = None,
-               practice_context: dict | None = None) -> int:
+               practice_context: dict | None = None) -> tuple[int, list[dict]]:
     """
     Fill a single gap topic by generating and inserting MCQs.
 
@@ -263,7 +280,7 @@ def fill_topic(gap: dict, conn: sqlite3.Connection, client, store_name: str,
         count: if set, request exactly this many MCQs from Gemini (default: None = gap threshold)
 
     Returns:
-        Number of MCQs inserted into the database.
+        Tuple of (number of MCQs inserted, list of inserted MCQ dicts).
     """
     if count is not None:
         print(f"  Generating exactly {count} MCQs for: {gap['topic_name']}")
@@ -289,13 +306,13 @@ def fill_topic(gap: dict, conn: sqlite3.Connection, client, store_name: str,
         cited = CitedMCQResponse.model_validate_json(cite_response.text).model_dump()
 
         mcqs = cited.get("mcqs", [])
-        inserted = insert_mcqs(conn, mcqs, gap)
-        print(f"  Inserted: {inserted} MCQs")
-        return inserted
+        inserted_count, inserted_rows = insert_mcqs(conn, mcqs, gap)
+        print(f"  Inserted: {inserted_count} MCQs")
+        return inserted_count, inserted_rows
 
     except Exception as e:
         print(f"  Error: {e}")
-        return 0
+        return 0, []
 
 
 def generate_fresh_mcqs(
@@ -312,13 +329,13 @@ def generate_fresh_mcqs(
     cite_config,
     practice_context: dict | None = None,
     allow_existing_fallback: bool = True,
-) -> int:
+) -> tuple[int, list[dict]]:
     """
     Generate exactly `count` fresh MCQs for a topic, bypassing gap threshold.
     Always adds to the generated pool regardless of existing MCQ count.
 
-    If Gemini returns fewer than `count`, fills remaining slots from existing
-    generated MCQs for the same topic (already validated, already in bank).
+    Returns:
+        Tuple of (total_inserted_count, list of inserted MCQ dicts with full data).
     """
     topic_row = conn.execute(
         "SELECT topic_id, subject, book_id FROM question_bank WHERE LOWER(topic_name)=LOWER(?) LIMIT 1",
@@ -339,7 +356,7 @@ def generate_fresh_mcqs(
         "source_file": source_file,
         "mcq_count": 0,
     }
-    inserted = fill_topic(
+    inserted_count, inserted_rows = fill_topic(
         gap,
         conn,
         client,
@@ -351,7 +368,7 @@ def generate_fresh_mcqs(
     )
 
     # Fill remaining slots from existing generated MCQs for this topic
-    remaining = count - inserted
+    remaining = count - inserted_count
     if allow_existing_fallback and remaining > 0:
         existing = [dict(r) for r in conn.execute("""
             SELECT * FROM question_bank
@@ -361,6 +378,7 @@ def generate_fresh_mcqs(
             LIMIT ?
         """, (topic_name, remaining)).fetchall()]
 
+        fallback_rows = []
         for mcq in existing:
             opts_json = mcq.get("options")
             if isinstance(opts_json, str):
@@ -369,7 +387,7 @@ def generate_fresh_mcqs(
             if isinstance(ca_json, str):
                 ca_json = json.dumps(json.loads(ca_json), ensure_ascii=False)
             try:
-                conn.execute("""
+                cursor = conn.execute("""
                     INSERT INTO question_bank (
                         subject, book_id, chapter_id, chapter_name, book_page_range, source_file,
                         topic_id, topic_name, question, options, correct_answer,
@@ -385,15 +403,32 @@ def generate_fresh_mcqs(
                     json.dumps(mcq.get("practice_related_questions", []), ensure_ascii=False),
                     0, mcq.get("difficulty", "medium"),
                 ))
-                inserted += 1
+                inserted_count += 1
+                row_dict = {
+                    "id": cursor.lastrowid,
+                    "chapter_id": chapter_id,
+                    "chapter_name": chapter_name,
+                    "topic_id": topic_id,
+                    "topic_name": topic_name,
+                    "question": mcq.get("question"),
+                    "options": mcq.get("options") if not isinstance(mcq.get("options"), str) else json.loads(mcq.get("options")),
+                    "correct_answer": mcq.get("correct_answer") if not isinstance(mcq.get("correct_answer"), str) else json.loads(mcq.get("correct_answer")),
+                    "difficulty": mcq.get("difficulty", "medium"),
+                    "book_page_range": book_page_range,
+                    "source_quote": mcq.get("source_quote", ""),
+                    "pdf_page_number": mcq.get("pdf_page_number"),
+                    "origin": "generated",
+                }
+                fallback_rows.append(row_dict)
                 remaining -= 1
                 if remaining <= 0:
                     break
             except sqlite3.IntegrityError:
                 pass
         conn.commit()
+        inserted_rows.extend(fallback_rows)
 
-    return inserted
+    return inserted_count, inserted_rows
 
 
 def setup_generator() -> tuple:

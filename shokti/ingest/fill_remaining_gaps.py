@@ -16,13 +16,15 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 
+from shokti.core.config import GEMINI
+
 
 ROOT = Path(__file__).resolve().parents[2]
 ENV_FILE = ROOT / ".env"
 QUESTION_BANK_DIR = ROOT / "question_bank"
 
-MEDICAL_STORE_NAME = "fileSearchStores/freemedicalqbank-evkv74ii2b3s"
-MODEL = "gemini-3.1-flash-lite"
+MEDICAL_STORE_NAME = GEMINI.STORE_NAME
+MODEL = GEMINI.MODEL
 
 CHAPTER_TARGETS = [
     {"chapter_id": "01", "chapter_name": "কোষ ও এর গঠন", "ranges": [(34, 68)]},

@@ -95,23 +95,14 @@ def _rebalance_by_difficulty(
     hard_ratio: float,
 ) -> list[dict]:
     """Rebalance selected MCQs toward target difficulty split by swapping with pool."""
+    if count <= 0 or not selected:
+        return selected
+
     target_easy = int(count * easy_ratio)
     target_medium = int(count * medium_ratio)
     target_hard = count - target_easy - target_medium
 
-    # Classify current selection
-    easy_mcqs = [m for m in selected if m.get("difficulty") == "easy"]
-    medium_mcqs = [m for m in selected if m.get("difficulty") == "medium"]
-    hard_mcqs = [m for m in selected if m.get("difficulty") == "hard"]
-
-    def needs_swap(current_list, target):
-        return len(current_list) - target
-
-    excess_easy = len(easy_mcqs) - target_easy
-    excess_medium = len(medium_mcqs) - target_medium
-    excess_hard = len(hard_mcqs) - target_hard
-
-    # Build lookup for unselected pool by difficulty and topic
+    # Build lookup for unselected pool by difficulty
     unselected = [m for m in pool if m not in selected]
     unselected_by_diff = {"easy": [], "medium": [], "hard": []}
     for m in unselected:
@@ -119,38 +110,57 @@ def _rebalance_by_difficulty(
         if diff in unselected_by_diff:
             unselected_by_diff[diff].append(m)
 
-    def swap(excess_list, excess_count, needed_diff, needed_count):
-        if excess_count <= 0 or needed_count <= 0:
+    # Build current counts from live selected list, not stale filtered copies
+    current_easy = [m for m in selected if m.get("difficulty") == "easy"]
+    current_medium = [m for m in selected if m.get("difficulty") == "medium"]
+    current_hard = [m for m in selected if m.get("difficulty") == "hard"]
+
+    def do_swap(excess_sources: list[dict], needed_diff: str, num_swaps: int) -> None:
+        if num_swaps <= 0 or not excess_sources or not unselected_by_diff.get(needed_diff):
             return
-        # Swap: replace highest-weight item in excess_list with lowest-weight from needed pool
-        # We use random pick since weights already determined at selection time
-        to_remove = random.sample(excess_list, min(excess_count, len(excess_list)))
-        to_add = random.sample(unselected_by_diff[needed_diff], min(needed_count, len(unselected_by_diff[needed_diff])))
+        available = [m for m in excess_sources if m in selected]
+        to_remove = available[:min(num_swaps, len(available))]
+        to_add = unselected_by_diff[needed_diff][:min(num_swaps, len(unselected_by_diff[needed_diff]))]
         for m in to_remove:
             selected.remove(m)
-        for m in to_add:
-            selected.append(m)
+        selected.extend(to_add)
 
     # Swap excess easy for needed hard/medium
+    excess_easy = len(current_easy) - target_easy
     if excess_easy > 0:
-        needed_hard = max(0, target_hard - len(hard_mcqs))
-        needed_medium = max(0, target_medium - len(medium_mcqs))
-        swap(easy_mcqs, excess_easy, "hard", min(excess_easy, needed_hard))
-        swap(easy_mcqs, excess_easy, "medium", min(excess_easy, needed_medium))
+        needed_hard = max(0, target_hard - len(current_hard))
+        needed_medium = max(0, target_medium - len(current_medium))
+        do_swap(current_easy, "hard", min(excess_easy, needed_hard))
+        do_swap(current_easy, "medium", min(excess_easy, needed_medium))
+
+    # Recompute after potential changes from easy swaps
+    current_hard = [m for m in selected if m.get("difficulty") == "hard"]
+    current_medium = [m for m in selected if m.get("difficulty") == "medium"]
+
     # Swap excess hard for needed easy/medium
+    excess_hard = len(current_hard) - target_hard
     if excess_hard > 0:
-        needed_easy = max(0, target_easy - len(easy_mcqs))
-        needed_medium = max(0, target_medium - len(medium_mcqs))
-        swap(hard_mcqs, excess_hard, "easy", min(excess_hard, needed_easy))
-        swap(hard_mcqs, excess_hard, "medium", min(excess_hard, needed_medium))
+        needed_easy = max(0, target_easy - len(current_easy))
+        needed_medium = max(0, target_medium - len(current_medium))
+        do_swap(current_hard, "easy", min(excess_hard, needed_easy))
+        do_swap(current_hard, "medium", min(excess_hard, needed_medium))
+
+    # Recompute after potential changes from hard swaps
+    current_easy = [m for m in selected if m.get("difficulty") == "easy"]
+    current_medium = [m for m in selected if m.get("difficulty") == "medium"]
+
     # Swap excess medium for needed easy/hard
+    excess_medium = len(current_medium) - target_medium
     if excess_medium > 0:
-        needed_easy = max(0, target_easy - len(easy_mcqs))
-        needed_hard = max(0, target_hard - len(hard_mcqs))
-        swap(medium_mcqs, excess_medium, "easy", min(excess_medium, needed_easy))
-        swap(medium_mcqs, excess_medium, "hard", min(excess_medium, needed_hard))
+        needed_easy = max(0, target_easy - len(current_easy))
+        needed_hard = max(0, target_hard - len(current_hard))
+        do_swap(current_medium, "easy", min(excess_medium, needed_easy))
+        do_swap(current_medium, "hard", min(excess_medium, needed_hard))
 
     return selected
+
+
+def _confidence_risk_multiplier(stats) -> float:
     if not stats or stats.attempts <= 0:
         return 1.0
     risk_count = (stats.confident_mistake_count * 1.25) + (stats.no_knowledge_count * 1.5)
@@ -444,17 +454,15 @@ def _generate_fresh_for_session(
     context = _practice_generation_context(
         conn, student_id, mode, topic, chapter, target_topic, reason, count, ratios, topic_stats_list
     )
-    max_id_row = conn.execute("SELECT COALESCE(MAX(id), 0) AS max_id FROM question_bank").fetchone()
-    max_existing_id = max_id_row[0] if max_id_row else 0
 
-    def _worker() -> int:
+    def _worker() -> list[dict]:
         from shokti.generators.gap_filler import generate_fresh_mcqs, setup_generator
 
         worker_conn = sqlite3.connect(DB_PATH)
         worker_conn.row_factory = sqlite3.Row
         try:
             client, store_name, gen_config, cite_config = setup_generator()
-            return generate_fresh_mcqs(
+            _, mcq_rows = generate_fresh_mcqs(
                 topic_name=target_topic["topic_name"],
                 chapter_id=target_topic["chapter_id"],
                 chapter_name=target_topic["chapter_name"],
@@ -469,13 +477,14 @@ def _generate_fresh_for_session(
                 practice_context=context,
                 allow_existing_fallback=False,
             )
+            return mcq_rows
         finally:
             worker_conn.close()
 
     executor = ThreadPoolExecutor(max_workers=1)
     try:
         future = executor.submit(_worker)
-        inserted = future.result(timeout=getattr(MCQ, "FRESH_GENERATION_MAX_WAIT_SECONDS", 20))
+        mcq_rows = future.result(timeout=getattr(MCQ, "FRESH_GENERATION_MAX_WAIT_SECONDS", 120))
         executor.shutdown(wait=False, cancel_futures=True)
     except TimeoutError:
         executor.shutdown(wait=False, cancel_futures=True)
@@ -486,23 +495,10 @@ def _generate_fresh_for_session(
         logger.warning("Fresh MCQ generation failed for practice session: %s", exc)
         return []
 
-    if inserted <= 0:
+    if not mcq_rows:
         return []
 
-    where_clause, params = _where_for_filters(
-        origin="generated",
-        topic=target_topic.get("topic_name"),
-        chapter=target_topic.get("chapter_name"),
-    )
-    where_clause = f"{where_clause} AND id > ?"
-    params.append(max_existing_id)
-    params.append(count)
-    return [
-        dict(r) for r in conn.execute(
-            f"SELECT * FROM question_bank WHERE {where_clause} ORDER BY id DESC LIMIT ?",
-            params,
-        ).fetchall()
-    ]
+    return mcq_rows
 
 
 def build_session(

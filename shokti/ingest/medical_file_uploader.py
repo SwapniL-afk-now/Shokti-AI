@@ -5,7 +5,7 @@ Usage:
     python shokti/ingest/medical_file_uploader.py
 
 Uploads 7 medical Qbank chunk PDFs to Gemini Files API, then imports
-them into the fileSearchStores/freemedicalqbank-lnxjz27ui0b7 store.
+them into the configured medical File Search store.
 
 This is Phase 1 of the medical question bank extraction pipeline.
 """
@@ -18,9 +18,10 @@ from pathlib import Path
 import requests
 from google import genai
 
+from shokti.core.config import GEMINI
+
 ROOT_DIR = Path(__file__).resolve().parents[2]
 ENV_FILE = ROOT_DIR / ".env"
-GEMINI_EMBEDDING_MODEL = "gemini-embedding-2"
 sys.path.insert(0, str(ROOT_DIR))
 
 
@@ -28,8 +29,8 @@ API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 MEDICAL_CHUNKS_DIR = ROOT_DIR / "books" / "medical_qbank_chunks"
 MAX_WORKERS = 6
 
-MEDICAL_STORE_DISPLAY_NAME = "free_medical_qbank"
-MEDICAL_STORE_NAME = "fileSearchStores/freemedicalqbank-lnxjz27ui0b7"
+MEDICAL_STORE_DISPLAY_NAME = GEMINI.STORE_DISPLAY_NAME
+MEDICAL_STORE_NAME = GEMINI.STORE_NAME
 
 
 def log(msg):
@@ -71,7 +72,7 @@ def find_or_create_store(client):
     store = client.file_search_stores.create(
         config={
             "display_name": MEDICAL_STORE_DISPLAY_NAME,
-            "embedding_model": f"models/{GEMINI_EMBEDDING_MODEL}",
+            "embedding_model": f"models/gemini-embedding-2",
         }
     )
     log(f"Created store: {store.name}")
