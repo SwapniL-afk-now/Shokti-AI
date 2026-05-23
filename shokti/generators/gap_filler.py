@@ -105,6 +105,22 @@ practice_session_context:
 """
     min_mcqs = count if count is not None else MCQ.MCQS_PER_GAP
     exact_or_min = f"exactly {count}" if count is not None else f"at least {min_mcqs}"
+
+    # Use difficulty split from practice_context if available, otherwise fall back to config
+    if practice_context and "desired_difficulty_split" in practice_context:
+        split = practice_context["desired_difficulty_split"]
+        difficulty_str = (
+            f"easy {int(split.get('easy', MCQ.DIFFICULTY_EASY_RATIO) * 100)}%, "
+            f"medium {int(split.get('medium', MCQ.DIFFICULTY_MEDIUM_RATIO) * 100)}%, "
+            f"hard {int(split.get('hard', MCQ.DIFFICULTY_HARD_RATIO) * 100)}%"
+        )
+    else:
+        difficulty_str = (
+            f"easy {int(MCQ.DIFFICULTY_EASY_RATIO * 100)}%, "
+            f"medium {int(MCQ.DIFFICULTY_MEDIUM_RATIO * 100)}%, "
+            f"hard {int(MCQ.DIFFICULTY_HARD_RATIO * 100)}%"
+        )
+
     return f"""
 You are an expert Bangladeshi medical admission Biology question setter.
 
@@ -124,7 +140,7 @@ Rules:
 3. Match the STYLE of these examples:
 {examples_text}
 4. Do not duplicate any provided qbank, generated, weak-risk, or coverage examples.
-5. Difficulty: mixed (easy 30%, medium 50%, hard 20%).
+5. Difficulty: {difficulty_str}.
 6. If practice_session_context exists, generate questions that diagnose its target weakness or coverage gap.
 7. Output language: {MCQ.OUTPUT_LANGUAGE}.
 8. If quality grounded content is limited, generate fewer MCQs — quality over quantity.

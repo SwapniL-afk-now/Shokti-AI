@@ -266,11 +266,16 @@ Return valid JSON only.
 
     all_mcqs = [normalize_mcq(mcq, i) for i, mcq in enumerate(cited["mcqs"], start=1)]
 
+    difficulty_label = (
+        f"easy {int(MCQ.DIFFICULTY_EASY_RATIO*100)}%, "
+        f"medium {int(MCQ.DIFFICULTY_MEDIUM_RATIO*100)}%, "
+        f"hard {int(MCQ.DIFFICULTY_HARD_RATIO*100)}%"
+    )
     output = {
         "store_name": store.name,
         "topic": "Chapter 06 and Chapter 08",
         "number_of_mcqs": len(all_mcqs),
-        "difficulty": f"mixed: easy 30%, medium 50%, hard 20%",
+        "difficulty": difficulty_label,
         "chapters": CHAPTER_JOBS,
         "mcqs": all_mcqs,
     }

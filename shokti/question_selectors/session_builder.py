@@ -37,6 +37,9 @@ class SessionComposition:
     fresh_generated_count: int = 0
     unseen_count: int = 0
     other_count: int = 0
+    easy_count: int = 0
+    medium_count: int = 0
+    hard_count: int = 0
 
 
 def _gaussian_weight(accuracy: float, mean: float, sigma: float) -> float:
@@ -83,7 +86,71 @@ def _select_by_weight(mcqs: list, weights: list[float], n: int) -> list:
     return selected
 
 
-def _confidence_risk_multiplier(stats) -> float:
+def _rebalance_by_difficulty(
+    selected: list[dict],
+    pool: list[dict],
+    count: int,
+    easy_ratio: float,
+    medium_ratio: float,
+    hard_ratio: float,
+) -> list[dict]:
+    """Rebalance selected MCQs toward target difficulty split by swapping with pool."""
+    target_easy = int(count * easy_ratio)
+    target_medium = int(count * medium_ratio)
+    target_hard = count - target_easy - target_medium
+
+    # Classify current selection
+    easy_mcqs = [m for m in selected if m.get("difficulty") == "easy"]
+    medium_mcqs = [m for m in selected if m.get("difficulty") == "medium"]
+    hard_mcqs = [m for m in selected if m.get("difficulty") == "hard"]
+
+    def needs_swap(current_list, target):
+        return len(current_list) - target
+
+    excess_easy = len(easy_mcqs) - target_easy
+    excess_medium = len(medium_mcqs) - target_medium
+    excess_hard = len(hard_mcqs) - target_hard
+
+    # Build lookup for unselected pool by difficulty and topic
+    unselected = [m for m in pool if m not in selected]
+    unselected_by_diff = {"easy": [], "medium": [], "hard": []}
+    for m in unselected:
+        diff = m.get("difficulty", "medium")
+        if diff in unselected_by_diff:
+            unselected_by_diff[diff].append(m)
+
+    def swap(excess_list, excess_count, needed_diff, needed_count):
+        if excess_count <= 0 or needed_count <= 0:
+            return
+        # Swap: replace highest-weight item in excess_list with lowest-weight from needed pool
+        # We use random pick since weights already determined at selection time
+        to_remove = random.sample(excess_list, min(excess_count, len(excess_list)))
+        to_add = random.sample(unselected_by_diff[needed_diff], min(needed_count, len(unselected_by_diff[needed_diff])))
+        for m in to_remove:
+            selected.remove(m)
+        for m in to_add:
+            selected.append(m)
+
+    # Swap excess easy for needed hard/medium
+    if excess_easy > 0:
+        needed_hard = max(0, target_hard - len(hard_mcqs))
+        needed_medium = max(0, target_medium - len(medium_mcqs))
+        swap(easy_mcqs, excess_easy, "hard", min(excess_easy, needed_hard))
+        swap(easy_mcqs, excess_easy, "medium", min(excess_easy, needed_medium))
+    # Swap excess hard for needed easy/medium
+    if excess_hard > 0:
+        needed_easy = max(0, target_easy - len(easy_mcqs))
+        needed_medium = max(0, target_medium - len(medium_mcqs))
+        swap(hard_mcqs, excess_hard, "easy", min(excess_hard, needed_easy))
+        swap(hard_mcqs, excess_hard, "medium", min(excess_hard, needed_medium))
+    # Swap excess medium for needed easy/hard
+    if excess_medium > 0:
+        needed_easy = max(0, target_easy - len(easy_mcqs))
+        needed_hard = max(0, target_hard - len(hard_mcqs))
+        swap(medium_mcqs, excess_medium, "easy", min(excess_medium, needed_easy))
+        swap(medium_mcqs, excess_medium, "hard", min(excess_medium, needed_hard))
+
+    return selected
     if not stats or stats.attempts <= 0:
         return 1.0
     risk_count = (stats.confident_mistake_count * 1.25) + (stats.no_knowledge_count * 1.5)
@@ -623,8 +690,26 @@ def _build_adaptive_session(
             selected.append(other_mcqs[i])
             comp.other_count += 1
 
+    # Rebalance toward target difficulty split
+    selected = _rebalance_by_difficulty(
+        selected, all_mcqs, count,
+        MCQ.DIFFICULTY_EASY_RATIO,
+        MCQ.DIFFICULTY_MEDIUM_RATIO,
+        MCQ.DIFFICULTY_HARD_RATIO,
+    )
+
     # Shuffle to avoid predictable ordering
     random.shuffle(selected)
+
+    # Count difficulty distribution for composition
+    for m in selected:
+        diff = m.get("difficulty", "medium")
+        if diff == "easy":
+            comp.easy_count += 1
+        elif diff == "medium":
+            comp.medium_count += 1
+        else:
+            comp.hard_count += 1
 
     return selected[:count], comp
 
@@ -671,10 +756,24 @@ def _build_weakness_session(
     weighted.sort(key=lambda item: item[0])
     mcqs = [m for _, m in weighted]
     selected = fresh_mcqs[:fresh_target] + mcqs[:max(0, count - min(fresh_target, len(fresh_mcqs)))]
+    selected = _rebalance_by_difficulty(
+        selected, selected, count,
+        MCQ.DIFFICULTY_EASY_RATIO,
+        MCQ.DIFFICULTY_MEDIUM_RATIO,
+        MCQ.DIFFICULTY_HARD_RATIO,
+    )
     comp = SessionComposition(
         weak_topic_count=min(max(0, count - min(fresh_target, len(fresh_mcqs))), len(mcqs)),
         fresh_generated_count=min(fresh_target, len(fresh_mcqs)),
     )
+    for m in selected:
+        diff = m.get("difficulty", "medium")
+        if diff == "easy":
+            comp.easy_count += 1
+        elif diff == "medium":
+            comp.medium_count += 1
+        else:
+            comp.hard_count += 1
     return selected[:count], comp
 
 
@@ -711,10 +810,24 @@ def _build_coverage_session(
 
     random.shuffle(mcqs)
     selected = fresh_mcqs[:fresh_target] + mcqs[:max(0, count - min(fresh_target, len(fresh_mcqs)))]
+    selected = _rebalance_by_difficulty(
+        selected, selected, count,
+        MCQ.DIFFICULTY_EASY_RATIO,
+        MCQ.DIFFICULTY_MEDIUM_RATIO,
+        MCQ.DIFFICULTY_HARD_RATIO,
+    )
     comp = SessionComposition(
         unseen_count=min(max(0, count - min(fresh_target, len(fresh_mcqs))), len(mcqs)),
         fresh_generated_count=min(fresh_target, len(fresh_mcqs)),
     )
+    for m in selected:
+        diff = m.get("difficulty", "medium")
+        if diff == "easy":
+            comp.easy_count += 1
+        elif diff == "medium":
+            comp.medium_count += 1
+        else:
+            comp.hard_count += 1
     return selected[:count], comp
 
 
@@ -725,23 +838,21 @@ def _build_random_session(
     chapter: str | None = None,
 ) -> tuple[list[dict], SessionComposition]:
     """Fallback: pure random selection (optionally filtered by topic/chapter)."""
-    if topic or chapter:
-        if topic and chapter:
-            mcqs = [dict(r) for r in conn.execute(
-                "SELECT * FROM question_bank WHERE topic_name = ? COLLATE NOCASE AND chapter_name = ? COLLATE NOCASE",
-                (topic, chapter),
-            ).fetchall()]
-        elif topic:
-            mcqs = [dict(r) for r in conn.execute(
-                "SELECT * FROM question_bank WHERE topic_name = ? COLLATE NOCASE",
-                (topic,),
-            ).fetchall()]
-        else:
-            mcqs = [dict(r) for r in conn.execute(
-                "SELECT * FROM question_bank WHERE chapter_name = ? COLLATE NOCASE",
-                (chapter,),
-            ).fetchall()]
-        random.shuffle(mcqs)
+    if topic and chapter:
+        mcqs = [dict(r) for r in conn.execute(
+            "SELECT * FROM question_bank WHERE topic_name = ? COLLATE NOCASE AND chapter_name = ? COLLATE NOCASE",
+            (topic, chapter),
+        ).fetchall()]
+    elif topic:
+        mcqs = [dict(r) for r in conn.execute(
+            "SELECT * FROM question_bank WHERE topic_name = ? COLLATE NOCASE",
+            (topic,),
+        ).fetchall()]
+    elif chapter:
+        mcqs = [dict(r) for r in conn.execute(
+            "SELECT * FROM question_bank WHERE chapter_name = ? COLLATE NOCASE",
+            (chapter,),
+        ).fetchall()]
     else:
         mcqs = [
             dict(r) for r in conn.execute(
@@ -749,13 +860,25 @@ def _build_random_session(
                 (count,),
             ).fetchall()
         ]
-    # Count origins
+    random.shuffle(mcqs)
+    mcqs = _rebalance_by_difficulty(
+        mcqs, mcqs, count,
+        MCQ.DIFFICULTY_EASY_RATIO,
+        MCQ.DIFFICULTY_MEDIUM_RATIO,
+        MCQ.DIFFICULTY_HARD_RATIO,
+    )
     qbank = sum(1 for m in mcqs if m['origin'] == 'question_bank')
     generated = sum(1 for m in mcqs if m['origin'] == 'generated')
+    easy = sum(1 for m in mcqs if m.get('difficulty') == 'easy')
+    medium = sum(1 for m in mcqs if m.get('difficulty') == 'medium')
+    hard = sum(1 for m in mcqs if m.get('difficulty') == 'hard')
     comp = SessionComposition(
         qbank_count=qbank,
         generated_count=generated,
         other_count=len(mcqs) - qbank - generated,
+        easy_count=easy,
+        medium_count=medium,
+        hard_count=hard,
     )
     return mcqs[:count], comp
 
