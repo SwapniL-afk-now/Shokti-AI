@@ -148,19 +148,26 @@ async def test_frontend_user_flow(async_client: AsyncClient):
     exam_start_data = exam_start_res.json()
     exam_mcqs = exam_start_data["mcqs"]
     assert len(exam_mcqs) > 0
+    assert "session_id" in exam_start_data
     
     # Submit exam answers
     exam_answers = [{"mcq_id": q["id"], "selected_option": "B"} for q in exam_mcqs]
     submit_res = await async_client.post(
         f"/api/exams/{exam_id}/submit",
         headers=headers,
-        json=exam_answers
+        json={
+            "session_id": exam_start_data["session_id"],
+            "time_taken_seconds": 42,
+            "answers": exam_answers,
+        }
     )
     assert submit_res.status_code == 200
     submit_data = submit_res.json()
+    assert submit_data["attempt_id"]
     assert "score_percentage" in submit_data
     assert "correct" in submit_data
     assert submit_data["total"] == len(exam_mcqs)
+    assert submit_data["feedback"] is None
 
     # 8. Verify exam status updates to is_completed == True
     post_exams_res = await async_client.get("/api/exams", headers=headers)
@@ -168,6 +175,12 @@ async def test_frontend_user_flow(async_client: AsyncClient):
     post_exams = post_exams_res.json()
     matching_exam = next(ex for ex in post_exams if ex["exam_id"] == exam_id)
     assert matching_exam["is_completed"] is True
+    assert matching_exam["attempt_count"] == 1
+    assert matching_exam["latest_attempt_id"] == submit_data["attempt_id"]
+
+    attempts_res = await async_client.get(f"/api/exams/{exam_id}/attempts", headers=headers)
+    assert attempts_res.status_code == 200
+    assert attempts_res.json()[0]["attempt_id"] == submit_data["attempt_id"]
 
     # 9. Verify enhanced academic statistics populate profile/dashboard correctly
     stats_res2 = await async_client.get("/api/student/stats", headers=headers)

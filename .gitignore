@@ -13,5 +13,4 @@ __pycache__/
 *.pyc
 
 # Large source PDFs (available separately)
-books/**
-!books/chapters/
+books/

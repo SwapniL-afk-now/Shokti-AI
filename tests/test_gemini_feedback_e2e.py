@@ -15,7 +15,7 @@ async def test_gemini_feedback_and_related_questions_flow(async_client: AsyncCli
     1. Seed related questions in SQLite test database.
     2. Mock Gemini AI feedback generation.
     3. Register, start, and submit an exam.
-    4. Assert feedback and related practice questions are returned in the response.
+    4. Assert scoring returns immediately, then stored feedback is reviewable.
     """
     
     # 1. Seed practice_related_questions for MCQ ID 1
@@ -75,6 +75,7 @@ async def test_gemini_feedback_and_related_questions_flow(async_client: AsyncCli
         
         start_res = await async_client.post(f"/api/exams/{exam_id}/start", headers=headers)
         assert start_res.status_code == 200
+        assert [item["id"] for item in start_res.json()["mcqs"][:8]] == [1, 2, 3, 4, 5, 6, 7, 8]
         
         # 5. Submit Exam answers (specifically answer MCQ 1 incorrectly to trigger related questions)
         # In conftest, correct answer for MCQ 1 is 'A' (text "It is a plant"). We submit 'B' (wrong).
@@ -92,6 +93,9 @@ async def test_gemini_feedback_and_related_questions_flow(async_client: AsyncCli
         
         # 6. Verify assertions
         # A. Score assertions
+        assert data["attempt_id"]
+        assert data["feedback_status"] == "pending"
+        assert data["feedback"] is None
         assert data["total"] == 1
         assert data["correct"] == 0
         assert data["score_percentage"] == 0.0
@@ -105,9 +109,15 @@ async def test_gemini_feedback_and_related_questions_flow(async_client: AsyncCli
         assert detail["is_correct"] is False
         assert detail["practice_related_questions"] == prq_data
         
-        # C. Gemini feedback assertion
-        assert "feedback" in data
-        feedback = data["feedback"]
+        # C. Gemini feedback is stored for the saved attempt and can be reviewed later.
+        feedback_res = await async_client.get(
+            f"/api/exams/attempts/{data['attempt_id']}/feedback",
+            headers=headers,
+        )
+        assert feedback_res.status_code == 200
+        feedback_data = feedback_res.json()
+        assert feedback_data["feedback_status"] == "ready"
+        feedback = feedback_data["feedback"]
         assert feedback is not None
         assert feedback["overall_summary"] == "Excellent job overall, but pay attention to cell structure details."
         assert len(feedback["weak_topics"]) == 1
@@ -116,12 +126,23 @@ async def test_gemini_feedback_and_related_questions_flow(async_client: AsyncCli
         assert feedback["strong_topics"][0]["topic_name"] == "Fungi"
         assert len(feedback["personalized_study_recommendations"]) == 2
 
+        attempts_res = await async_client.get(f"/api/exams/{exam_id}/attempts", headers=headers)
+        assert attempts_res.status_code == 200
+        attempts = attempts_res.json()
+        assert attempts[0]["attempt_id"] == data["attempt_id"]
+
+        attempt_detail_res = await async_client.get(f"/api/exams/attempts/{data['attempt_id']}", headers=headers)
+        assert attempt_detail_res.status_code == 200
+        attempt_detail = attempt_detail_res.json()
+        assert attempt_detail["feedback"]["overall_summary"] == mock_feedback.overall_summary
+        assert attempt_detail["details"][0]["practice_related_questions"] == prq_data
+
 
 async def test_exam_submission_returns_local_feedback_when_ai_is_unavailable(async_client: AsyncClient):
     """
     Regression coverage for the student-facing submit flow:
-    even when the AI feedback service cannot run, the exam response must still
-    include usable analysis for the right-side results drawer.
+    even when the AI feedback service cannot run, the saved attempt must still
+    receive usable fallback analysis for the right-side results panel.
     """
     reg_res = await async_client.post("/api/auth/register", json={
         "email": "fallback_feedback_student@shokti.com",
@@ -153,10 +174,50 @@ async def test_exam_submission_returns_local_feedback_when_ai_is_unavailable(asy
     assert data["correct"] == 1
     assert data["details"][0]["is_correct"] is False
     assert data["details"][0]["correct_option"] == "A"
-    assert data["feedback"] is not None
-    assert data["feedback"]["overall_summary"]
-    assert data["feedback"]["weak_topics"]
-    assert data["feedback"]["personalized_study_recommendations"]
+    assert data["feedback"] is None
+
+    feedback_res = await async_client.get(
+        f"/api/exams/attempts/{data['attempt_id']}/feedback",
+        headers=headers,
+    )
+    assert feedback_res.status_code == 200
+    feedback_data = feedback_res.json()
+    assert feedback_data["feedback_status"] == "ready"
+    assert feedback_data["feedback_source"] == "local_fallback"
+    assert feedback_data["feedback"]["overall_summary"]
+    assert feedback_data["feedback"]["weak_topics"]
+    assert feedback_data["feedback"]["personalized_study_recommendations"]
+
+
+async def test_multiple_attempts_are_saved_newest_first(async_client: AsyncClient):
+    reg_res = await async_client.post("/api/auth/register", json={
+        "email": "attempt_history_student@shokti.com",
+        "password": "password123",
+        "name": "Attempt History Student"
+    })
+    assert reg_res.status_code == 200
+    headers = {"Authorization": f"Bearer {reg_res.json()['access_token']}"}
+
+    exams_res = await async_client.get("/api/exams", headers=headers)
+    exam_id = exams_res.json()[0]["exam_id"]
+
+    payload_1 = {"session_id": "session-one", "time_taken_seconds": 11, "answers": [{"mcq_id": 1, "selected_option": "B"}]}
+    payload_2 = {"session_id": "session-two", "time_taken_seconds": 7, "answers": [{"mcq_id": 1, "selected_option": "A"}]}
+
+    with patch("shokti.api.routers.exams._load_gemini_api_key", side_effect=RuntimeError("no key")):
+        first = await async_client.post(f"/api/exams/{exam_id}/submit", headers=headers, json=payload_1)
+        second = await async_client.post(f"/api/exams/{exam_id}/submit", headers=headers, json=payload_2)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    attempts_res = await async_client.get(f"/api/exams/{exam_id}/attempts", headers=headers)
+    assert attempts_res.status_code == 200
+    attempts = attempts_res.json()
+    assert [item["attempt_id"] for item in attempts[:2]] == [
+        second.json()["attempt_id"],
+        first.json()["attempt_id"],
+    ]
+    assert attempts[0]["time_taken_seconds"] == 7
 
 
 async def test_confidence_profile_endpoint(async_client: AsyncClient):

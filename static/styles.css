@@ -2090,6 +2090,179 @@ a:hover {
   color: var(--text-main);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   FIXED MODEL TESTS + INLINE ANALYSIS PANEL
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.subject-exam-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.subject-exam-header,
+.attempts-header,
+.attempt-item,
+.exam-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.subject-exam-header h3 {
+  margin: 10px 0 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+}
+
+.subject-exam-note {
+  color: var(--text-muted);
+  font-size: 14px;
+  max-width: 280px;
+  text-align: right;
+}
+
+.exam-card-actions {
+  align-items: stretch;
+}
+
+.exam-card-actions .btn {
+  flex: 1;
+}
+
+.attempts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.attempt-item {
+  background: var(--surface-tonal);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 18px;
+}
+
+.attempt-item p {
+  margin: 6px 0;
+  color: var(--text-main);
+}
+
+.exam-results-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 28px;
+  align-items: start;
+}
+
+.exam-results-main {
+  min-width: 0;
+}
+
+.analysis-drawer {
+  position: sticky !important;
+  top: 92px;
+  left: auto;
+  width: auto;
+  height: auto;
+  max-height: calc(100vh - 112px);
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: none;
+}
+
+.analysis-drawer.hidden {
+  display: block !important;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.analysis-drawer-backdrop,
+.drawer-blur-overlay,
+.drawer-close-btn,
+.tutor-pulse-icon,
+.loading-progress-steps {
+  display: none !important;
+}
+
+.analysis-drawer-content {
+  position: static;
+  width: auto;
+  max-width: none;
+  height: auto;
+  box-shadow: none;
+  border-left: 0;
+  animation: none;
+}
+
+.analysis-drawer-header {
+  padding: 18px 20px;
+}
+
+.analysis-status-pill {
+  border-radius: 999px;
+  background: var(--surface-tonal);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 10px;
+  text-transform: uppercase;
+}
+
+.analysis-status-pill.ready {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.analysis-drawer-body {
+  max-height: calc(100vh - 180px);
+  padding: 20px;
+}
+
+.drawer-loading-card {
+  min-height: 260px;
+  background: var(--surface-tonal);
+  box-shadow: none;
+}
+
+@media (max-width: 1100px) {
+  .exam-results-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-drawer {
+    position: static !important;
+    max-height: none;
+  }
+
+  .analysis-drawer-body {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .subject-exam-header,
+  .attempts-header,
+  .attempt-item,
+  .exam-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .subject-exam-note {
+    max-width: none;
+    text-align: left;
+  }
+}
+
 @keyframes slideInRight {
   from {
     transform: translateX(100%);

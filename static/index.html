@@ -203,11 +203,10 @@
           <div class="dashboard-grid">
             
             <div class="dash-card main-cta-card">
-              <h2>Ready to practice?</h2>
-              <p>Keep your streak alive. The scheduler has selected optimized questions for your review intervals.</p>
+              <h2>Ready to take mock test?</h2>
+              <p>Start one of the fixed model tests and let Shokti track your performance across every attempt.</p>
               <div class="cta-actions">
-                <button class="btn primary-btn" onclick="startQuickPractice('adaptive')">Start Smart Practice ⚡</button>
-                <button class="btn secondary-btn" onclick="startQuickPractice('weakness')">Focus Weak Areas</button>
+                <button class="btn primary-btn" onclick="startMockTest()">Start Mock Test</button>
               </div>
             </div>
             
@@ -376,10 +375,34 @@
         <section id="tab-exams" class="portal-tab-content">
           <!-- Exams Selection Grid -->
           <div id="exams-list-container">
-            <h2>Fixed Diagnostic & Mock Exams</h2>
-            <p class="muted-text">Simulated mock tests covering specific chapters or biology categories with timers.</p>
-            <div class="exams-grid" id="exams-grid-data">
-              <!-- Seeded exam cards loaded here -->
+            <h2>Fixed Model Tests Per Subject</h2>
+            <p class="muted-text">Biology currently has 3 fixed model tests. More subject-wise fixed model tests will be added later.</p>
+            <div class="subject-exam-panel">
+              <div class="subject-exam-header">
+                <div>
+                  <span class="meta-tag">Biology</span>
+                  <h3>3 Fixed Model Tests</h3>
+                </div>
+                <span class="subject-exam-note">Saved attempts and AI analysis are kept for review.</span>
+              </div>
+              <div class="exams-grid" id="exams-grid-data">
+                <!-- Seeded exam cards loaded here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Saved Attempts List -->
+          <div id="exam-attempts-container" class="content-card hidden">
+            <div class="attempts-header">
+              <div>
+                <span class="session-badge" id="attempts-exam-label">Saved Attempts</span>
+                <h2 id="attempts-title">Saved Attempts</h2>
+                <p class="muted-text">Open any previous attempt to review the score, answers, related practice, and stored analysis.</p>
+              </div>
+              <button class="btn secondary-btn btn-sm" onclick="resetExamsTab()">Back to Model Tests</button>
+            </div>
+            <div id="exam-attempts-list" class="attempts-list">
+              <!-- Loaded dynamically -->
             </div>
           </div>
           
@@ -407,52 +430,93 @@
           
           <!-- Exam Results Summary -->
           <div id="exam-results-summary" class="content-card hidden">
-            <div class="summary-congrats">
-              <span class="congrats-emoji">📊</span>
-              <h2 id="exam-result-title">Exam Results</h2>
-              <p>Review your score and view personalized AI insights below.</p>
-            </div>
-            
-            <div class="summary-stats-row">
-              <div class="summary-stat-box">
-                <span class="stat-val" id="exam-res-score">0/0</span>
-                <span class="stat-lbl">Final Score</span>
-              </div>
-              <div class="summary-stat-box">
-                <span class="stat-val" id="exam-res-pct">0%</span>
-                <span class="stat-lbl">Percentage</span>
-              </div>
-              <div class="summary-stat-box">
-                <span class="stat-val" id="exam-res-time">0s</span>
-                <span class="stat-lbl">Total Time</span>
-              </div>
-            </div>
+            <div class="exam-results-layout">
+              <div class="exam-results-main">
+                <div class="summary-congrats">
+                  <span class="congrats-emoji">📊</span>
+                  <h2 id="exam-result-title">Exam Results</h2>
+                  <p>Review your score, answer choices, and related practice.</p>
+                </div>
+                
+                <div class="summary-stats-row">
+                  <div class="summary-stat-box">
+                    <span class="stat-val" id="exam-res-score">0/0</span>
+                    <span class="stat-lbl">Final Score</span>
+                  </div>
+                  <div class="summary-stat-box">
+                    <span class="stat-val" id="exam-res-pct">0%</span>
+                    <span class="stat-lbl">Percentage</span>
+                  </div>
+                  <div class="summary-stat-box">
+                    <span class="stat-val" id="exam-res-time">0s</span>
+                    <span class="stat-lbl">Total Time</span>
+                  </div>
+                </div>
+                
+                <div class="summary-section">
+                  <h3>Per-Topic Accuracy</h3>
+                  <div class="summary-topic-bars" id="exam-res-topic-breakdown">
+                    <!-- Topic bars filled dynamically -->
+                  </div>
+                </div>
 
-            <!-- Reopen AI Analysis Drawer Button -->
-             <div style="text-align: center; margin: 24px 0;">
-               <button class="btn primary-btn" onclick="openAnalysisDrawer()" style="font-size: 16px; padding: 12px 32px; border-radius: 30px; box-shadow: var(--shadow-elevated); display: inline-flex; align-items: center; gap: 8px;">🤖 Open AI Tutor Analysis</button>
-             </div>
-
-            
-            <div class="summary-section">
-              <h3>Per-Topic Accuracy</h3>
-              <div class="summary-topic-bars" id="exam-res-topic-breakdown">
-                <!-- Topic bars filled dynamically -->
+                <div class="review-answers-box">
+                  <h3>Detailed Question Review</h3>
+                  <p class="muted-text">Incorrect questions display related mock practice questions to try.</p>
+                  <div id="exam-res-questions-review">
+                    <!-- Loaded dynamically -->
+                  </div>
+                </div>
+                
+                <div class="summary-actions" style="margin-top: 30px;">
+                  <button class="btn primary-btn" onclick="resetExamsTab()">Back to Model Tests</button>
+                  <button class="btn secondary-btn" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
+                </div>
               </div>
-            </div>
 
-            <!-- Question Review section with practice related questions -->
-            <div class="review-answers-box">
-              <h3>Detail Question Review</h3>
-              <p class="muted-text">Incorrect questions display related mock practice questions to try.</p>
-              <div id="exam-res-questions-review">
-                <!-- Loaded dynamically -->
-              </div>
-            </div>
-            
-            <div class="summary-actions" style="margin-top: 30px;">
-              <button class="btn primary-btn" onclick="resetExamsTab()">Back to Exams List</button>
-              <button class="btn secondary-btn" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
+              <aside id="exam-analysis-drawer" class="analysis-drawer">
+                <div class="analysis-drawer-header">
+                  <h3>AI Tutor Insights</h3>
+                  <span class="analysis-status-pill" id="analysis-status-pill">Loading</span>
+                </div>
+                <div class="analysis-drawer-body">
+                  <div id="drawer-loading-view" class="drawer-loading-card">
+                    <div class="drawer-loading-content">
+                      <div class="tutor-loading-spinner"></div>
+                      <h4>Generating Analysis</h4>
+                      <p>Results are ready. Gemini analysis is being stored and will appear here automatically.</p>
+                    </div>
+                  </div>
+                  
+                  <div id="drawer-analysis-view" class="hidden">
+                    <div class="drawer-summary-card">
+                      <h4>Quantitative Performance Summary</h4>
+                      <p id="drawer-feedback-summary">Summary text goes here...</p>
+                    </div>
+                    
+                    <div class="drawer-list-card weak-card">
+                      <h5>Concepts Needing Fixes</h5>
+                      <ul id="drawer-feedback-weak">
+                        <!-- Dynamic -->
+                      </ul>
+                    </div>
+                    
+                    <div class="drawer-list-card strong-card">
+                      <h5>Key Strengths & Praise</h5>
+                      <ul id="drawer-feedback-strong">
+                        <!-- Dynamic -->
+                      </ul>
+                    </div>
+                    
+                    <div class="drawer-list-card plan-card">
+                      <h5>Personalized Study Plan</h5>
+                      <ul id="drawer-feedback-tips">
+                        <!-- Dynamic -->
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
         </section>
@@ -606,73 +670,6 @@
     
   </div>
   
-  <!-- Right-Side AI Tutor Analysis Drawer -->
-  <div id="exam-analysis-drawer" class="analysis-drawer hidden">
-    <div class="analysis-drawer-backdrop" onclick="closeAnalysisDrawer()"></div>
-    <div class="analysis-drawer-content">
-      <div class="analysis-drawer-header">
-        <h3>🤖 AI Tutor Insights</h3>
-        <button class="drawer-close-btn" onclick="closeAnalysisDrawer()">&times;</button>
-      </div>
-      <div class="analysis-drawer-body">
-        
-        <!-- Loading Screen with Animation & Blurred Background -->
-        <div id="drawer-loading-view" class="drawer-loading-card">
-          <div class="drawer-blur-overlay"></div>
-          <div class="drawer-loading-content">
-            <div class="tutor-pulse-icon">🤖</div>
-            <div class="tutor-loading-spinner"></div>
-            <h4>Synthesizing Performance Data...</h4>
-            <p>Our AI Tutor is evaluating your answer patterns, classifying questions using Bloom's Taxonomy, and curating customized learning insights.</p>
-            <div class="loading-progress-steps">
-              <div class="step-line"></div>
-              <div class="progress-step active" id="step-1">1. Scanning answers</div>
-              <div class="progress-step" id="step-2">2. Checking accuracy</div>
-              <div class="progress-step" id="step-3">3. Generating tutoring plan</div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Completed Analysis View -->
-        <div id="drawer-analysis-view" class="hidden">
-          <div class="drawer-summary-card">
-            <h4>Quantitative Performance Summary</h4>
-            <p id="drawer-feedback-summary">Summary text goes here...</p>
-          </div>
-
-          <div class="drawer-list-card answer-audit-card">
-            <h5>Answer Audit</h5>
-            <div id="drawer-answer-audit" class="drawer-answer-audit">
-              <!-- Dynamic -->
-            </div>
-          </div>
-          
-          <div class="drawer-list-card weak-card">
-            <h5>📉 Concepts Needing Fixes</h5>
-            <ul id="drawer-feedback-weak">
-              <!-- Dynamic -->
-            </ul>
-          </div>
-          
-          <div class="drawer-list-card strong-card">
-            <h5>📈 Key Strengths & Praise</h5>
-            <ul id="drawer-feedback-strong">
-              <!-- Dynamic -->
-            </ul>
-          </div>
-          
-          <div class="drawer-list-card plan-card">
-            <h5>📚 Personalized Study Plan</h5>
-            <ul id="drawer-feedback-tips">
-              <!-- Dynamic -->
-            </ul>
-          </div>
-        </div>
-        
-      </div>
-    </div>
-  </div>
-
   <!-- JavaScript Application Script -->
   <script src="/static/app.js"></script>
 </body>

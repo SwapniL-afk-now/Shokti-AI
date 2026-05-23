@@ -6,6 +6,7 @@ let state = {
   examsLocked: false,
   latestExamFeedback: null,
   latestExamAnswerAudit: [],
+  analysisPollInterval: null,
   
   // Practice Session State
   practice: {
@@ -27,6 +28,8 @@ let state = {
     timerInterval: null,
     secondsRemaining: 0,
     startTime: null,
+    sessionId: null,
+    latestAttemptId: null,
     mcqCache: {} // Cache complete MCQ details
   },
   
@@ -88,6 +91,14 @@ async function apiRequest(path, method = 'GET', body = null) {
   }
   
   return response.json();
+}
+
+function escapeAttribute(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 async function tryTokenRefresh() {
@@ -522,6 +533,21 @@ async function startQuickPractice(mode) {
   await launchPracticeSession();
 }
 
+async function startMockTest() {
+  try {
+    const exams = await apiRequest('/api/exams');
+    if (!exams || exams.length === 0) {
+      alert("No fixed model tests are available yet.");
+      return;
+    }
+    const nextExam = exams.find(ex => !ex.is_completed) || exams[0];
+    switchPortalTab('exams');
+    await startExam(nextExam.exam_id, nextExam.title);
+  } catch (e) {
+    alert("Failed to start mock test: " + e.message);
+  }
+}
+
 async function launchPracticeSession() {
   const mode = document.getElementById('practice-mode').value;
   const count = parseInt(document.getElementById('practice-count').value);
@@ -733,7 +759,12 @@ function showSessionSummary() {
 
 // --- Timed Exams Tab ---
 function resetExamsTab() {
+  if (state.analysisPollInterval) {
+    clearInterval(state.analysisPollInterval);
+    state.analysisPollInterval = null;
+  }
   document.getElementById('exams-list-container').classList.remove('hidden');
+  document.getElementById('exam-attempts-container').classList.add('hidden');
   document.getElementById('exam-runner').classList.add('hidden');
   document.getElementById('exam-results-summary').classList.add('hidden');
   
@@ -769,18 +800,25 @@ async function loadExams() {
       card.className = 'exam-card';
       
       const badgeHtml = ex.is_completed 
-        ? `<span class="meta-tag success" style="margin-left: 8px; vertical-align: middle; background-color: var(--success-bg); color: var(--success); font-size: 11px; padding: 3px 8px; border-radius: 8px;">✓ Completed</span>` 
+        ? `<span class="meta-tag success" style="margin-left: 8px; vertical-align: middle; background-color: var(--success-bg); color: var(--success); font-size: 11px; padding: 3px 8px; border-radius: 8px;">Completed</span>` 
         : ``;
         
       const btnClass = ex.is_completed ? 'btn secondary-btn btn-full' : 'btn primary-btn btn-full';
       const btnText = ex.is_completed ? 'Retry Exam' : 'Launch Exam';
+      const latestScore = Number.isFinite(ex.latest_score_percentage)
+        ? `<p class="exam-card-meta">Latest Score: ${ex.latest_score_percentage.toFixed(0)}% | Attempts: ${ex.attempt_count}</p>`
+        : `<p class="exam-card-meta">Attempts: ${ex.attempt_count || 0}</p>`;
       
       card.innerHTML = `
         <div>
           <h3 class="exam-card-title">${ex.title}${badgeHtml}</h3>
           <p class="exam-card-meta">${ex.mcq_count} Questions | ${ex.duration_minutes} Minutes</p>
+          ${latestScore}
         </div>
-        <button class="${btnClass}" onclick="startExam('${ex.exam_id}')">${btnText}</button>
+        <div class="exam-card-actions">
+          <button class="${btnClass}" onclick="startExam('${ex.exam_id}', '${escapeAttribute(ex.title)}')">${btnText}</button>
+          ${ex.is_completed ? `<button class="btn secondary-btn btn-full" onclick="showExamAttempts('${ex.exam_id}', '${escapeAttribute(ex.title)}')">View</button>` : ``}
+        </div>
       `;
       container.appendChild(card);
     });
@@ -794,23 +832,93 @@ async function startShortcutExam(examId) {
   await startExam(examId);
 }
 
-async function startExam(examId) {
+async function showExamAttempts(examId, examTitle) {
+  try {
+    if (state.analysisPollInterval) {
+      clearInterval(state.analysisPollInterval);
+      state.analysisPollInterval = null;
+    }
+    const attempts = await apiRequest(`/api/exams/${examId}/attempts`);
+    document.getElementById('exams-list-container').classList.add('hidden');
+    document.getElementById('exam-runner').classList.add('hidden');
+    document.getElementById('exam-results-summary').classList.add('hidden');
+    document.getElementById('exam-attempts-container').classList.remove('hidden');
+    document.getElementById('attempts-exam-label').textContent = `Exam ${examId}`;
+    document.getElementById('attempts-title').textContent = examTitle || 'Saved Attempts';
+
+    const list = document.getElementById('exam-attempts-list');
+    if (!attempts.length) {
+      list.innerHTML = `<p class="muted-text">No saved attempts yet.</p>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    attempts.forEach((attempt, index) => {
+      const submitted = new Date(attempt.submitted_at).toLocaleString();
+      const item = document.createElement('div');
+      item.className = 'attempt-item';
+      item.innerHTML = `
+        <div>
+          <strong>Attempt ${attempts.length - index}</strong>
+          <p>${attempt.correct}/${attempt.total} correct | ${attempt.score_percentage.toFixed(0)}% | ${attempt.time_taken_seconds}s</p>
+          <span class="muted-text">${submitted} | Analysis: ${attempt.feedback_status}</span>
+        </div>
+        <button class="btn primary-btn btn-sm" onclick="openSavedAttempt('${attempt.attempt_id}')">View</button>
+      `;
+      list.appendChild(item);
+    });
+  } catch (e) {
+    alert("Failed to load saved attempts: " + e.message);
+  }
+}
+
+async function openSavedAttempt(attemptId) {
+  try {
+    const attempt = await apiRequest(`/api/exams/attempts/${attemptId}`);
+    state.exam = {
+      examId: attempt.exam_id,
+      title: attempt.exam_title || 'Saved Attempt',
+      mcqs: [],
+      currentIndex: 0,
+      answers: {},
+      secondsRemaining: 0,
+      startTime: null,
+      sessionId: attempt.session_id,
+      latestAttemptId: attempt.attempt_id,
+      mcqCache: {}
+    };
+    document.getElementById('exam-attempts-container').classList.add('hidden');
+    document.getElementById('exam-results-summary').classList.remove('hidden');
+    renderExamResult(attempt, attempt.time_taken_seconds || 0);
+    if (!attempt.feedback) {
+      beginFeedbackPolling(attempt.attempt_id);
+    }
+  } catch (e) {
+    alert("Failed to open saved attempt: " + e.message);
+  }
+}
+
+async function startExam(examId, examTitle = null) {
   try {
     const startData = await apiRequest(`/api/exams/${examId}/start`, 'POST');
     
     state.exam = {
       examId: examId,
-      title: `Mock Test ${examId}`,
+      title: examTitle || `Mock Test ${examId}`,
       mcqs: startData.mcqs,
       currentIndex: 0,
       answers: {},
       secondsRemaining: startData.duration_minutes * 60,
       startTime: Date.now(),
+      sessionId: startData.session_id,
+      latestAttemptId: null,
       mcqCache: {} // Reset Cache
     };
     
     document.getElementById('exam-runner-title').textContent = state.exam.title.toUpperCase();
     document.getElementById('exams-list-container').classList.add('hidden');
+    document.getElementById('exam-attempts-container').classList.add('hidden');
+    document.getElementById('exam-results-summary').classList.add('hidden');
     document.getElementById('exam-runner').classList.remove('hidden');
     
     startExamTimer();
@@ -949,158 +1057,33 @@ async function submitExam() {
     clearInterval(state.exam.timerInterval);
   }
   
-  const payload = state.exam.mcqs.map(q => ({
+  const answers = state.exam.mcqs.map(q => ({
     mcq_id: q.id,
     selected_option: state.exam.answers[q.id] || ''
   }));
+  const timeTaken = Math.round((Date.now() - state.exam.startTime) / 1000);
+  const payload = {
+    session_id: state.exam.sessionId,
+    time_taken_seconds: timeTaken,
+    answers
+  };
   
-  // 1. Immediately switch views to results summary with loading state
+  // Show the results shell immediately; the API returns scoring before AI analysis finishes.
   document.getElementById('exam-runner').classList.add('hidden');
+  document.getElementById('exam-attempts-container').classList.add('hidden');
   document.getElementById('exam-results-summary').classList.remove('hidden');
-  
-  document.getElementById('exam-res-score').textContent = `--/--`;
-  document.getElementById('exam-res-pct').textContent = `...`;
-  document.getElementById('exam-res-time').textContent = `...`;
-  
-  const breakdown = document.getElementById('exam-res-topic-breakdown');
-  breakdown.innerHTML = `<div class="loading-placeholder"><p>Calculating topic accuracies...</p></div>`;
-  
-  const reviewContainer = document.getElementById('exam-res-questions-review');
-  reviewContainer.innerHTML = `<div class="loading-placeholder"><p>Loading question review...</p></div>`;
-  
-  // 2. Open the AI Analysis Drawer immediately in loading state
-  state.latestExamFeedback = null;
-  openAnalysisDrawer();
-  
-  // Set up progress steps animation sequence in the drawer loading view
-  const step1 = document.getElementById('step-1');
-  const step2 = document.getElementById('step-2');
-  const step3 = document.getElementById('step-3');
-  
-  let animationFinished = false;
-  
-  // Quick progression simulation for steps 1 and 2
-  setTimeout(() => {
-    if (step1) step1.className = 'progress-step completed';
-    if (step2) step2.className = 'progress-step active';
-    
-    setTimeout(() => {
-      if (step2) step2.className = 'progress-step completed';
-      if (step3) step3.className = 'progress-step active';
-      animationFinished = true;
-      checkAndShowAnalysis();
-    }, 1200);
-  }, 1000);
-  
-  let apiResponse = null;
-  
-  function checkAndShowAnalysis() {
-    if (animationFinished && apiResponse) {
-      if (step3) step3.className = 'progress-step completed';
-      
-      // Populate and show the analysis
-      const feedback = apiResponse.feedback || buildLocalExamFeedback(apiResponse);
-      state.latestExamFeedback = feedback;
-      state.latestExamAnswerAudit = buildExamAnswerAudit(apiResponse.details || []);
-      populateDrawerContent(feedback);
-      populateDrawerAnswerAudit(state.latestExamAnswerAudit);
-      
-      const loadingView = document.getElementById('drawer-loading-view');
-      const analysisView = document.getElementById('drawer-analysis-view');
-      if (loadingView) loadingView.classList.add('hidden');
-      if (analysisView) analysisView.classList.remove('hidden');
-    }
-  }
+  document.getElementById('exam-res-score').textContent = '--/--';
+  document.getElementById('exam-res-pct').textContent = '...';
+  document.getElementById('exam-res-time').textContent = `${timeTaken}s`;
+  document.getElementById('exam-res-topic-breakdown').innerHTML = `<div class="loading-placeholder"><p>Calculating topic accuracies...</p></div>`;
+  document.getElementById('exam-res-questions-review').innerHTML = `<div class="loading-placeholder"><p>Loading question review...</p></div>`;
+  setAnalysisLoadingState();
 
   try {
     const res = await apiRequest(`/api/exams/${state.exam.examId}/submit`, 'POST', payload);
-    apiResponse = res;
-    if (!apiResponse.feedback) {
-      apiResponse.feedback = buildLocalExamFeedback(apiResponse);
-    }
-    
-    // Update score metrics
-    const timeTaken = Math.round((Date.now() - state.exam.startTime) / 1000);
-    document.getElementById('exam-res-score').textContent = `${res.correct}/${res.total}`;
-    document.getElementById('exam-res-pct').textContent = `${res.score_percentage.toFixed(0)}%`;
-    document.getElementById('exam-res-time').textContent = `${timeTaken}s`;
-    
-    // Render per-topic breakdown
-    breakdown.innerHTML = '';
-    if (res.details && res.details.length > 0) {
-      const topicsAcc = {};
-      res.details.forEach(item => {
-        let topicName = 'General';
-        const cached = state.exam.mcqCache[item.mcq_id];
-        if (cached) {
-          topicName = cached.topic_name;
-        } else {
-          const brief = state.exam.mcqs.find(q => q.id === item.mcq_id);
-          if (brief) topicName = brief.topic_name;
-        }
-        
-        if (!topicsAcc[topicName]) {
-          topicsAcc[topicName] = { total: 0, correct: 0 };
-        }
-        topicsAcc[topicName].total++;
-        if (item.is_correct) {
-          topicsAcc[topicName].correct++;
-        }
-      });
-      
-      for (const [topic, s] of Object.entries(topicsAcc)) {
-        const pct = Math.round((s.correct / s.total) * 100);
-        const div = document.createElement('div');
-        div.className = 'summary-topic-bar-item';
-        div.innerHTML = `
-          <span class="topic-bar-label">${topic}</span>
-          <div style="flex: 1; margin: 0 20px;">
-            <div class="weak-progress-bar">
-              <div class="weak-progress-fill" style="width: ${pct}%; background-color: ${pct >= 60 ? 'var(--success)' : 'var(--danger)'}"></div>
-            </div>
-          </div>
-          <span class="topic-bar-percent">${s.correct}/${s.total} (${pct}%)</span>
-        `;
-        breakdown.appendChild(div);
-      }
-    } else {
-      breakdown.innerHTML = `<p class="muted-text">No detailed topic breakdown available.</p>`;
-    }
-    
-    // Render Detailed Question Review
-    reviewContainer.innerHTML = '';
-    res.details.forEach(item => {
-      const qCard = document.createElement('div');
-      qCard.className = `review-question-card ${item.is_correct ? 'correct-review' : 'wrong-review'}`;
-      qCard.id = `review-q-${item.mcq_id}`;
-      
-      let html = `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
-          <strong>Question ID: ${item.mcq_id}</strong>
-          <span style="color: ${item.is_correct ? 'var(--success)' : 'var(--danger)'}; font-weight: bold;">
-            ${item.is_correct ? '✓ Correct' : '✗ Incorrect'}
-          </span>
-        </div>
-      `;
-      
-      const cached = state.exam.mcqCache[item.mcq_id];
-      if (cached) {
-        html += renderReviewQuestionDetails(cached, item);
-      } else {
-        html += `
-          <div class="loading-placeholder" id="placeholder-${item.mcq_id}">
-            <p style="font-style: italic; color: var(--text-muted);">Loading question details...</p>
-          </div>
-        `;
-        fetchMCQForReview(item.mcq_id, item);
-      }
-      
-      qCard.innerHTML = html;
-      reviewContainer.appendChild(qCard);
-    });
-    
-    // If the animation has already finished, show the analysis right away. Otherwise, the animation callback will show it.
-    checkAndShowAnalysis();
+    state.exam.latestAttemptId = res.attempt_id;
+    renderExamResult(res, timeTaken);
+    beginFeedbackPolling(res.attempt_id);
     
     // Re-check exams completion status to unlock tabs
     try {
@@ -1120,61 +1103,170 @@ async function submitExam() {
     // Return to runner on error
     document.getElementById('exam-runner').classList.remove('hidden');
     document.getElementById('exam-results-summary').classList.add('hidden');
-    closeAnalysisDrawer();
+    setAnalysisLoadingState();
   }
 }
 
-function openAnalysisDrawer() {
-  const drawer = document.getElementById('exam-analysis-drawer');
-  if (!drawer) return;
-  
-  drawer.classList.remove('hidden');
-  
+function renderExamResult(result, fallbackTime = 0) {
+  const timeTaken = result.time_taken_seconds || fallbackTime || 0;
+  document.getElementById('exam-result-title').textContent = result.exam_title || state.exam.title || 'Exam Results';
+  document.getElementById('exam-res-score').textContent = `${result.correct}/${result.total}`;
+  document.getElementById('exam-res-pct').textContent = `${result.score_percentage.toFixed(0)}%`;
+  document.getElementById('exam-res-time').textContent = `${timeTaken}s`;
+
+  renderTopicBreakdown(result);
+  renderQuestionReview(result.details || []);
+
+  if (result.feedback) {
+    state.latestExamFeedback = result.feedback;
+    populateDrawerContent(result.feedback);
+    showAnalysisReady();
+  } else {
+    setAnalysisLoadingState();
+  }
+}
+
+function renderTopicBreakdown(result) {
+  const breakdown = document.getElementById('exam-res-topic-breakdown');
+  breakdown.innerHTML = '';
+
+  const topicRows = result.topic_breakdown && result.topic_breakdown.length
+    ? result.topic_breakdown.map(item => ({
+        topic: item.topic || 'General',
+        total: item.total || 0,
+        correct: item.correct || 0
+      }))
+    : buildTopicBreakdownFromDetails(result.details || []);
+
+  if (!topicRows.length) {
+    breakdown.innerHTML = `<p class="muted-text">No detailed topic breakdown available.</p>`;
+    return;
+  }
+
+  topicRows.forEach(item => {
+    const pct = item.total ? Math.round((item.correct / item.total) * 100) : 0;
+    const div = document.createElement('div');
+    div.className = 'summary-topic-bar-item';
+    div.innerHTML = `
+      <span class="topic-bar-label">${item.topic}</span>
+      <div style="flex: 1; margin: 0 20px;">
+        <div class="weak-progress-bar">
+          <div class="weak-progress-fill" style="width: ${pct}%; background-color: ${pct >= 60 ? 'var(--success)' : 'var(--danger)'}"></div>
+        </div>
+      </div>
+      <span class="topic-bar-percent">${item.correct}/${item.total} (${pct}%)</span>
+    `;
+    breakdown.appendChild(div);
+  });
+}
+
+function buildTopicBreakdownFromDetails(details) {
+  const topicsAcc = {};
+  details.forEach(item => {
+    const mcq = state.exam.mcqCache[item.mcq_id] || state.exam.mcqs.find(q => q.id === item.mcq_id) || {};
+    const topicName = mcq.topic_name || 'General';
+    if (!topicsAcc[topicName]) {
+      topicsAcc[topicName] = { topic: topicName, total: 0, correct: 0 };
+    }
+    topicsAcc[topicName].total++;
+    if (item.is_correct) topicsAcc[topicName].correct++;
+  });
+  return Object.values(topicsAcc);
+}
+
+function renderQuestionReview(details) {
+  const reviewContainer = document.getElementById('exam-res-questions-review');
+  reviewContainer.innerHTML = '';
+
+  if (!details.length) {
+    reviewContainer.innerHTML = `<p class="muted-text">No answer details are available for this attempt.</p>`;
+    return;
+  }
+
+  details.forEach(item => {
+    const qCard = document.createElement('div');
+    qCard.className = `review-question-card ${item.is_correct ? 'correct-review' : 'wrong-review'}`;
+    qCard.id = `review-q-${item.mcq_id}`;
+    let html = `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+        <strong>Question ID: ${item.mcq_id}</strong>
+        <span style="color: ${item.is_correct ? 'var(--success)' : 'var(--danger)'}; font-weight: bold;">
+          ${item.is_correct ? 'Correct' : 'Incorrect'}
+        </span>
+      </div>
+    `;
+
+    const cached = state.exam.mcqCache[item.mcq_id];
+    if (cached) {
+      html += renderReviewQuestionDetails(cached, item);
+    } else {
+      html += `
+        <div class="loading-placeholder" id="placeholder-${item.mcq_id}">
+          <p style="font-style: italic; color: var(--text-muted);">Loading question details...</p>
+        </div>
+      `;
+      fetchMCQForReview(item.mcq_id, item);
+    }
+
+    qCard.innerHTML = html;
+    reviewContainer.appendChild(qCard);
+  });
+}
+
+function setAnalysisLoadingState() {
+  if (state.analysisPollInterval) {
+    clearInterval(state.analysisPollInterval);
+    state.analysisPollInterval = null;
+  }
+  const pill = document.getElementById('analysis-status-pill');
   const loadingView = document.getElementById('drawer-loading-view');
   const analysisView = document.getElementById('drawer-analysis-view');
-  
-  // Reset steps
-  const step1 = document.getElementById('step-1');
-  const step2 = document.getElementById('step-2');
-  const step3 = document.getElementById('step-3');
-  
-  if (step1) step1.className = 'progress-step active';
-  if (step2) step2.className = 'progress-step';
-  if (step3) step3.className = 'progress-step';
-  
-  // If we already have the feedback loaded, we simulate a quick interactive loading process
-  if (state.latestExamFeedback) {
-    loadingView.classList.remove('hidden');
-    analysisView.classList.add('hidden');
-    
-    // Simulate interactive analysis steps
-    setTimeout(() => {
-      if (step1) step1.className = 'progress-step completed';
-      if (step2) step2.className = 'progress-step active';
-      
-      setTimeout(() => {
-        if (step2) step2.className = 'progress-step completed';
-        if (step3) step3.className = 'progress-step active';
-        
-        setTimeout(() => {
-          if (step3) step3.className = 'progress-step completed';
-          populateDrawerContent(state.latestExamFeedback);
-          loadingView.classList.add('hidden');
-          analysisView.classList.remove('hidden');
-        }, 500);
-      }, 500);
-    }, 500);
-  } else {
-    loadingView.classList.remove('hidden');
-    analysisView.classList.add('hidden');
+  if (pill) {
+    pill.textContent = 'Loading';
+    pill.classList.remove('ready');
   }
+  if (loadingView) loadingView.classList.remove('hidden');
+  if (analysisView) analysisView.classList.add('hidden');
 }
 
-function closeAnalysisDrawer() {
-  const drawer = document.getElementById('exam-analysis-drawer');
-  if (drawer) {
-    drawer.classList.add('hidden');
+function showAnalysisReady() {
+  const pill = document.getElementById('analysis-status-pill');
+  const loadingView = document.getElementById('drawer-loading-view');
+  const analysisView = document.getElementById('drawer-analysis-view');
+  if (pill) {
+    pill.textContent = 'Ready';
+    pill.classList.add('ready');
   }
+  if (loadingView) loadingView.classList.add('hidden');
+  if (analysisView) analysisView.classList.remove('hidden');
+}
+
+function beginFeedbackPolling(attemptId) {
+  if (!attemptId) {
+    populateDrawerContent(buildLocalExamFeedback({ total: 0, correct: 0, score_percentage: 0, details: [] }));
+    showAnalysisReady();
+    return;
+  }
+
+  setAnalysisLoadingState();
+  const poll = async () => {
+    try {
+      const data = await apiRequest(`/api/exams/attempts/${attemptId}/feedback`);
+      if (data.feedback_status === 'ready' && data.feedback) {
+        state.latestExamFeedback = data.feedback;
+        populateDrawerContent(data.feedback);
+        showAnalysisReady();
+        if (state.analysisPollInterval) {
+          clearInterval(state.analysisPollInterval);
+          state.analysisPollInterval = null;
+        }
+      }
+    } catch (err) {
+      console.warn("Feedback polling failed", err);
+    }
+  };
+  poll();
+  state.analysisPollInterval = setInterval(poll, 2000);
 }
 
 function populateDrawerContent(feedback) {
@@ -1297,59 +1389,6 @@ function buildLocalExamFeedback(result) {
       'Keep strong topics in spaced review so they stay stable.'
     ]
   };
-}
-
-function buildExamAnswerAudit(details) {
-  return details.map((item, index) => {
-    const mcq = state.exam.mcqCache[item.mcq_id] || state.exam.mcqs.find(q => q.id === item.mcq_id) || {};
-    return {
-      index: index + 1,
-      mcq_id: item.mcq_id,
-      question: mcq.question || `Question ID ${item.mcq_id}`,
-      is_correct: item.is_correct,
-      selected_option: item.selected_option || 'Not answered',
-      correct_option: item.correct_option,
-      explanation: mcq.explanation || '',
-      practice_related_questions: item.practice_related_questions || []
-    };
-  });
-}
-
-function populateDrawerAnswerAudit(auditItems) {
-  const auditEl = document.getElementById('drawer-answer-audit');
-  if (!auditEl) return;
-
-  if (!auditItems || auditItems.length === 0) {
-    auditEl.innerHTML = '<p class="muted-text">No answer details are available for this exam.</p>';
-    return;
-  }
-
-  auditEl.innerHTML = auditItems.map(item => {
-    const related = (!item.is_correct && item.practice_related_questions.length > 0)
-      ? `<div class="drawer-audit-related">
-          ${item.practice_related_questions.slice(0, 3).map(q => `<span>${q}</span>`).join('')}
-        </div>`
-      : '';
-    const explanation = item.explanation
-      ? `<p class="drawer-audit-explanation">${item.explanation}</p>`
-      : '';
-
-    return `
-      <article class="drawer-audit-item ${item.is_correct ? 'is-correct' : 'is-wrong'}">
-        <div class="drawer-audit-topline">
-          <strong>Q${item.index}</strong>
-          <span>${item.is_correct ? 'Correct' : 'Wrong'}</span>
-        </div>
-        <p class="drawer-audit-question">${item.question}</p>
-        <div class="drawer-audit-options">
-          <span>Your answer: <strong>${item.selected_option}</strong></span>
-          <span>Correct answer: <strong>${item.correct_option}</strong></span>
-        </div>
-        ${explanation}
-        ${related}
-      </article>
-    `;
-  }).join('');
 }
 
 function renderReviewQuestionDetails(mcq, item) {

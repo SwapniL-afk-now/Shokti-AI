@@ -47,6 +47,29 @@ CREATE TABLE IF NOT EXISTS student_mcq_stats (
     PRIMARY KEY (student_id, mcq_id),
     FOREIGN KEY (mcq_id) REFERENCES question_bank(id)
 );
+CREATE TABLE IF NOT EXISTS exam_attempts (
+    attempt_id TEXT PRIMARY KEY,
+    student_id TEXT NOT NULL,
+    exam_id TEXT NOT NULL,
+    exam_title TEXT NOT NULL,
+    exam_kind TEXT DEFAULT 'fixed_model_test',
+    session_id TEXT NOT NULL,
+    total INTEGER DEFAULT 0,
+    correct INTEGER DEFAULT 0,
+    score_percentage REAL DEFAULT 0,
+    time_taken_seconds INTEGER DEFAULT 0,
+    answers_json TEXT NOT NULL,
+    details_json TEXT NOT NULL,
+    topic_breakdown_json TEXT NOT NULL,
+    feedback_status TEXT DEFAULT 'pending',
+    feedback_source TEXT,
+    feedback_error TEXT,
+    feedback_json TEXT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    feedback_updated_at TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id)
+);
+CREATE INDEX IF NOT EXISTS idx_exam_attempts_student_exam ON exam_attempts(student_id, exam_id, submitted_at);
 """
 
 

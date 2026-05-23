@@ -37,12 +37,12 @@ async def get_stats(
     total_time = row.total_time if row and row.total_time else 0
     avg_time = (total_time / total) if total > 0 else 0.0
 
-    # Number of distinct exams completed
+    # Number of saved exam attempts completed
     exam_count_res = await db.execute(
         text("""
-            SELECT COUNT(DISTINCT session_type)
-            FROM student_answer_log
-            WHERE student_id = :sid AND session_type LIKE 'exam%'
+            SELECT COUNT(*)
+            FROM exam_attempts
+            WHERE student_id = :sid
         """),
         {"sid": student.id},
     )

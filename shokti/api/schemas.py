@@ -142,6 +142,9 @@ class ExamListItem(BaseModel):
     mcq_count: int
     duration_minutes: int
     is_completed: bool = False
+    attempt_count: int = 0
+    latest_attempt_id: str | None = None
+    latest_score_percentage: float | None = None
 
     @field_validator("exam_id")
     @classmethod
@@ -169,6 +172,12 @@ class ExamStartResponse(BaseModel):
 class ExamAnswerSubmission(BaseModel):
     mcq_id: int
     selected_option: str
+
+
+class ExamSubmitRequest(BaseModel):
+    session_id: str | None = None
+    time_taken_seconds: int = Field(default=0, ge=0)
+    answers: list[ExamAnswerSubmission]
 
 
 class ExamSubmissionResponse(BaseModel):
@@ -319,11 +328,44 @@ class ExamAnswerDetailWithPractice(BaseModel):
 
 
 class ExamSubmissionResponseWithFeedback(BaseModel):
+    attempt_id: str | None = None
+    exam_id: str | None = None
+    exam_title: str | None = None
+    session_id: str | None = None
+    time_taken_seconds: int = 0
     total: int
     correct: int
     score_percentage: float
     details: list[ExamAnswerDetailWithPractice]
+    topic_breakdown: list[dict] = []
+    feedback_status: str = "pending"
     feedback: ExamFeedback | None = None
+
+
+class ExamAttemptListItem(BaseModel):
+    attempt_id: str
+    exam_id: str
+    exam_title: str
+    total: int
+    correct: int
+    score_percentage: float
+    time_taken_seconds: int
+    feedback_status: str
+    submitted_at: datetime
+
+
+class ExamAttemptDetail(ExamSubmissionResponseWithFeedback):
+    submitted_at: datetime | None = None
+    feedback_source: str | None = None
+    feedback_error: str | None = None
+
+
+class ExamFeedbackStatusResponse(BaseModel):
+    attempt_id: str
+    feedback_status: str
+    feedback: ExamFeedback | None = None
+    feedback_source: str | None = None
+    feedback_error: str | None = None
 
 
 # ── Re-export ─────────────────────────────────────────────────────────────────
@@ -333,3 +375,4 @@ TopicResponse.model_rebuild()
 ExamSubmissionResponse.model_rebuild()
 ExamAnswerDetail.model_rebuild()
 ExamSubmissionResponseWithFeedback.model_rebuild()
+ExamAttemptDetail.model_rebuild()
