@@ -1,9 +1,10 @@
 """Exam router: list exams, start sessions, submit attempts, and fetch feedback."""
+import asyncio
 import json
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 from fastapi.security import HTTPBearer
 from pydantic import TypeAdapter
 from sqlalchemy import text
@@ -202,7 +203,6 @@ async def start_exam(
 
 @router.post("/{exam_id}/submit", response_model=ExamSubmissionResponseWithFeedback)
 async def submit_exam(
-    background_tasks: BackgroundTasks,
     exam_id: str = Path(pattern=r"^\d+$"),
     submission: ExamSubmitRequest | list[ExamAnswerSubmission] = Body(...),
     db: AsyncSession = Depends(get_db_dep),
@@ -224,6 +224,7 @@ async def submit_exam(
 
     mcq_meta = await _load_mcq_meta(db, [answer.mcq_id for answer in answers])
     prq_map = _build_related_question_map(mcq_meta)
+    await _fill_missing_related_practice(db, mcq_meta, prq_map)
     chapter_results: dict[str, dict[str, dict[str, int]]] = {}
     details = []
     correct_count = 0
@@ -317,13 +318,14 @@ async def submit_exam(
     )
     await db.commit()
 
-    background_tasks.add_task(
-        _generate_and_store_feedback,
-        attempt_id,
-        total,
-        correct_count,
-        score_pct,
-        topic_breakdown,
+    asyncio.create_task(
+        _generate_and_store_feedback(
+            attempt_id,
+            total,
+            correct_count,
+            score_pct,
+            topic_breakdown,
+        )
     )
 
     return ExamSubmissionResponseWithFeedback(
@@ -406,7 +408,7 @@ async def _load_mcq_meta(db: AsyncSession, mcq_ids: list[int]) -> dict[int, dict
     result = await db.execute(
         text(f"""
             SELECT id, chapter_id, chapter_name, topic_id, topic_name,
-                   correct_answer, practice_related_questions
+                   question, correct_answer, practice_related_questions
             FROM question_bank
             WHERE id IN ({placeholders})
         """),
@@ -425,6 +427,50 @@ def _build_related_question_map(mcq_meta: dict[int, dict]) -> dict[int, list[str
         except (json.JSONDecodeError, TypeError):
             prq_map[mcq_id] = []
     return prq_map
+
+
+async def _fill_missing_related_practice(
+    db: AsyncSession,
+    mcq_meta: dict[int, dict],
+    prq_map: dict[int, list[str]],
+) -> None:
+    for mcq_id, meta in mcq_meta.items():
+        if prq_map.get(mcq_id):
+            continue
+
+        params = {"mcq_id": mcq_id}
+        conditions = ["id != :mcq_id", "question IS NOT NULL", "TRIM(question) != ''"]
+        topic_id = meta.get("topic_id")
+        chapter_id = meta.get("chapter_id")
+
+        if topic_id:
+            conditions.append("topic_id = :topic_id")
+            params["topic_id"] = topic_id
+        elif chapter_id:
+            conditions.append("chapter_id = :chapter_id")
+            params["chapter_id"] = chapter_id
+        else:
+            prq_map[mcq_id] = []
+            continue
+
+        result = await db.execute(
+            text(f"""
+                SELECT question
+                FROM question_bank
+                WHERE {' AND '.join(conditions)}
+                ORDER BY
+                    CASE difficulty
+                        WHEN 'easy' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'hard' THEN 3
+                        ELSE 2
+                    END,
+                    id
+                LIMIT 3
+            """),
+            params,
+        )
+        prq_map[mcq_id] = [row.question for row in result.fetchall() if row.question]
 
 
 async def _get_attempt_row(db: AsyncSession, student_id: str, attempt_id: str):

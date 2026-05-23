@@ -1,8 +1,9 @@
 """Practice router: start session, submit answer."""
 import uuid
 import json
+import asyncio
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from shokti.api.deps import get_db_dep, get_current_student_dep
@@ -12,9 +13,18 @@ from shokti.api.schemas import (
     PracticeSessionResponse,
     AnswerSubmission,
     AnswerResponse,
+    ExamAnswerSubmission,
+    ExamSubmissionResponseWithFeedback,
+    ExamSubmitRequest,
     MCQListItem,
 )
 from shokti.core.config import DB_PATH, MCQ as MCQ_CONFIG
+from shokti.api.routers.exams import (
+    _build_related_question_map,
+    _fill_missing_related_practice,
+    _generate_and_store_feedback,
+    _load_mcq_meta,
+)
 
 router = APIRouter(prefix="/api/practice", tags=["practice"])
 
@@ -64,6 +74,147 @@ async def start_session(
             )
             for m in mcqs
         ],
+    )
+
+
+@router.post("/sessions/{session_id}/submit", response_model=ExamSubmissionResponseWithFeedback)
+async def submit_practice_session(
+    session_id: str,
+    submission: ExamSubmitRequest | list[ExamAnswerSubmission] = Body(...),
+    db: AsyncSession = Depends(get_db_dep),
+    student: Student = Depends(get_current_student_dep),
+):
+    if isinstance(submission, list):
+        answers = submission
+        time_taken_seconds = 0
+    else:
+        answers = submission.answers
+        time_taken_seconds = submission.time_taken_seconds
+
+    mcq_meta = await _load_mcq_meta(db, [answer.mcq_id for answer in answers])
+    prq_map = _build_related_question_map(mcq_meta)
+    await _fill_missing_related_practice(db, mcq_meta, prq_map)
+
+    chapter_results: dict[str, dict[str, dict[str, int]]] = {}
+    details = []
+    correct_count = 0
+
+    for answer in answers:
+        row = mcq_meta.get(answer.mcq_id)
+        if not row:
+            continue
+
+        correct_parsed = json.loads(row["correct_answer"]) if isinstance(row["correct_answer"], str) else (row["correct_answer"] or {})
+        correct_opt = correct_parsed.get("option", "A") if isinstance(correct_parsed, dict) else "A"
+        selected_option = (answer.selected_option or "").upper()
+        is_correct = selected_option == correct_opt.upper()
+        if is_correct:
+            correct_count += 1
+
+        await db.execute(
+            text("""
+                INSERT INTO student_answer_log (
+                    student_id, mcq_id, is_correct, answered_at, session_type,
+                    session_id, selected_option
+                )
+                VALUES (
+                    :student_id, :mcq_id, :is_correct, :answered_at, :session_type,
+                    :session_id, :selected_option
+                )
+            """),
+            {
+                "student_id": student.id,
+                "mcq_id": answer.mcq_id,
+                "is_correct": is_correct,
+                "answered_at": datetime.now(timezone.utc),
+                "session_type": "practice_exam",
+                "session_id": session_id,
+                "selected_option": selected_option,
+            },
+        )
+        await _update_sm2(db, student.id, answer.mcq_id, is_correct)
+
+        chapter = row.get("chapter_name") or "Unknown"
+        topic = row.get("topic_name") or "Unknown"
+        chapter_results.setdefault(chapter, {}).setdefault(topic, {"total": 0, "correct": 0})
+        chapter_results[chapter][topic]["total"] += 1
+        if is_correct:
+            chapter_results[chapter][topic]["correct"] += 1
+
+        details.append({
+            "mcq_id": answer.mcq_id,
+            "selected_option": selected_option,
+            "correct_option": correct_opt,
+            "is_correct": is_correct,
+            "practice_related_questions": [] if is_correct else prq_map.get(answer.mcq_id, []),
+        })
+
+    total = len(details)
+    score_pct = (correct_count / total * 100) if total > 0 else 0.0
+    topic_breakdown = [
+        {"chapter": chapter, "topic": topic, "total": values["total"], "correct": values["correct"]}
+        for chapter, topics in chapter_results.items()
+        for topic, values in topics.items()
+    ]
+
+    attempt_id = str(uuid.uuid4())
+    exam_id = f"practice-{session_id}"
+    exam_title = "Practice Exam"
+    await db.execute(
+        text("""
+            INSERT INTO exam_attempts (
+                attempt_id, student_id, exam_id, exam_title, exam_kind, session_id,
+                total, correct, score_percentage, time_taken_seconds, answers_json,
+                details_json, topic_breakdown_json, feedback_status, submitted_at
+            )
+            VALUES (
+                :attempt_id, :student_id, :exam_id, :exam_title, :exam_kind, :session_id,
+                :total, :correct, :score_percentage, :time_taken_seconds, :answers_json,
+                :details_json, :topic_breakdown_json, 'pending', :submitted_at
+            )
+        """),
+        {
+            "attempt_id": attempt_id,
+            "student_id": student.id,
+            "exam_id": exam_id,
+            "exam_title": exam_title,
+            "exam_kind": "practice_exam",
+            "session_id": session_id,
+            "total": total,
+            "correct": correct_count,
+            "score_percentage": score_pct,
+            "time_taken_seconds": time_taken_seconds,
+            "answers_json": json.dumps([answer.model_dump() for answer in answers], ensure_ascii=False),
+            "details_json": json.dumps(details, ensure_ascii=False),
+            "topic_breakdown_json": json.dumps(topic_breakdown, ensure_ascii=False),
+            "submitted_at": datetime.now(timezone.utc),
+        },
+    )
+    await db.commit()
+
+    asyncio.create_task(
+        _generate_and_store_feedback(
+            attempt_id,
+            total,
+            correct_count,
+            score_pct,
+            topic_breakdown,
+        )
+    )
+
+    return ExamSubmissionResponseWithFeedback(
+        attempt_id=attempt_id,
+        exam_id=exam_id,
+        exam_title=exam_title,
+        session_id=session_id,
+        time_taken_seconds=time_taken_seconds,
+        total=total,
+        correct=correct_count,
+        score_percentage=score_pct,
+        details=details,
+        topic_breakdown=topic_breakdown,
+        feedback_status="pending",
+        feedback=None,
     )
 
 

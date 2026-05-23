@@ -30,6 +30,9 @@ let state = {
     startTime: null,
     sessionId: null,
     latestAttemptId: null,
+    kind: 'fixed',
+    submitEndpoint: null,
+    originTab: 'exams',
     mcqCache: {} // Cache complete MCQ details
   },
   
@@ -522,8 +525,6 @@ async function loadChapterTopics(chapterId) {
 // --- Practice Session Runner ---
 function resetPracticeTab() {
   document.getElementById('practice-setup-card').classList.remove('hidden');
-  document.getElementById('practice-runner').classList.add('hidden');
-  document.getElementById('session-summary').classList.add('hidden');
 }
 
 async function startQuickPractice(mode) {
@@ -563,198 +564,48 @@ async function launchPracticeSession() {
   
   try {
     const sessionData = await apiRequest('/api/practice/session', 'POST', payload);
-    if (!sessionData.mcqs || sessionData.mcqs.length === 0) {
-      alert("No questions found matching your filter criteria.");
-      return;
-    }
-    
-    // Initialize practice state
-    state.practice = {
-      sessionId: sessionData.session_id,
-      mcqs: sessionData.mcqs,
-      currentIndex: 0,
-      answers: [],
-      mode: mode
-    };
-    
-    document.getElementById('practice-session-badge').textContent = `${mode.toUpperCase()} MODE`;
-    document.getElementById('practice-setup-card').classList.add('hidden');
-    document.getElementById('practice-runner').classList.remove('hidden');
-    
-    await loadPracticeMCQ();
+    await startPracticeExamFromSession(sessionData, mode, count);
   } catch (e) {
     alert("Failed to start session: " + e.message);
   }
 }
 
-async function loadPracticeMCQ() {
-  const idx = state.practice.currentIndex;
-  const total = state.practice.mcqs.length;
-  
-  document.getElementById('practice-question-counter').textContent = `Question ${idx + 1} of ${total}`;
-  document.getElementById('practice-progress-fill').style.width = `${(idx / total) * 100}%`;
-  
-  // Hide feedback
-  document.getElementById('feedback-card').classList.add('hidden');
-  
-  // Re-enable option buttons
-  document.querySelectorAll('#q-options .option-btn').forEach(btn => {
-    btn.className = 'option-btn';
-    btn.disabled = false;
-  });
-  
-  const briefMcq = state.practice.mcqs[idx];
-  
-  try {
-    const mcq = await apiRequest(`/api/mcqs/${briefMcq.id}`);
-    state.practice.currentMcq = mcq;
-    
-    // Render text
-    document.getElementById('q-topic-tag').textContent = mcq.topic_name;
-    document.getElementById('q-difficulty-tag').textContent = mcq.difficulty.toUpperCase();
-    document.getElementById('q-difficulty-tag').className = `meta-tag difficulty-tag ${mcq.difficulty}`;
-    document.getElementById('q-text').textContent = mcq.question;
-    
-    // Options
-    const optGrid = document.getElementById('q-options');
-    optGrid.innerHTML = '';
-    
-    ['A', 'B', 'C', 'D'].forEach(key => {
-      const text = mcq.options[key] || '';
-      if (text) {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.onclick = () => selectOption(key);
-        btn.innerHTML = `<span class="opt-letter">${key}</span> <span class="opt-text">${text}</span>`;
-        optGrid.appendChild(btn);
-      }
-    });
-    
-    state.practice.questionStartTime = Date.now();
-  } catch (e) {
-    console.error("MCQ fetch failed", e);
+async function startPracticeExamFromSession(sessionData, mode = 'adaptive', count = null) {
+  if (!sessionData.mcqs || sessionData.mcqs.length === 0) {
+    alert("No questions found matching your filter criteria.");
+    return;
   }
-}
 
-async function selectOption(selectedOpt) {
-  // Disable option buttons
-  document.querySelectorAll('#q-options .option-btn').forEach(btn => {
-    btn.disabled = true;
-  });
-  
-  const timeSpent = Math.max(1, Math.round((Date.now() - state.practice.questionStartTime) / 1000));
-  const mcq = state.practice.currentMcq;
-  
-  // Color the clicked option to show selected state immediately
-  const buttons = document.querySelectorAll('#q-options .option-btn');
-  buttons.forEach(btn => {
-    if (btn.querySelector('.opt-letter').textContent === selectedOpt) {
-      btn.classList.add('selected');
-    }
-  });
-  
-  try {
-    const res = await apiRequest(`/api/practice/sessions/${state.practice.sessionId}/answer`, 'POST', {
-      mcq_id: mcq.id,
-      selected_option: selectedOpt,
-      time_spent_seconds: timeSpent
-    });
-    
-    // Record to local state
-    state.practice.answers.push({
-      mcq_id: mcq.id,
-      topic_name: mcq.topic_name,
-      is_correct: res.is_correct,
-      time_spent: timeSpent
-    });
-    
-    // Update button colors
-    buttons.forEach(btn => {
-      const letter = btn.querySelector('.opt-letter').textContent;
-      if (letter === res.correct_option) {
-        btn.classList.remove('selected');
-        btn.classList.add('correct');
-      } else if (letter === selectedOpt && !res.is_correct) {
-        btn.classList.remove('selected');
-        btn.classList.add('wrong');
-      }
-    });
-    
-    // Show feedback card
-    document.getElementById('feedback-icon-val').textContent = res.is_correct ? '✅' : '❌';
-    document.getElementById('feedback-status-text').textContent = res.is_correct ? 'Correct!' : 'Wrong Answer';
-    document.getElementById('explanation-text').innerHTML = res.explanation || 'No explanation available for this question.';
-    
-    // SM-2 Schedule
-    const nextReview = document.getElementById('next-review-badge');
-    nextReview.textContent = res.is_correct ? '⚡ Scheduled review increased' : '⚡ Review scheduled for tomorrow';
-    
-    document.getElementById('feedback-card').classList.remove('hidden');
-    
-  } catch (e) {
-    alert("Failed to submit answer: " + e.message);
-  }
-}
+  state.practice = {
+    sessionId: sessionData.session_id,
+    mcqs: sessionData.mcqs,
+    currentIndex: 0,
+    answers: [],
+    mode
+  };
 
-function goToNextQuestion() {
-  state.practice.currentIndex++;
-  if (state.practice.currentIndex < state.practice.mcqs.length) {
-    loadPracticeMCQ();
-  } else {
-    showSessionSummary();
-  }
-}
+  state.exam = {
+    examId: `practice-${sessionData.session_id}`,
+    title: `${mode.charAt(0).toUpperCase() + mode.slice(1)} Practice Exam`,
+    mcqs: sessionData.mcqs,
+    currentIndex: 0,
+    answers: {},
+    timerInterval: null,
+    secondsRemaining: Math.max(count || sessionData.mcqs.length, sessionData.mcqs.length) * 90,
+    startTime: Date.now(),
+    sessionId: sessionData.session_id,
+    latestAttemptId: null,
+    kind: 'practice',
+    submitEndpoint: `/api/practice/sessions/${sessionData.session_id}/submit`,
+    originTab: 'practice',
+    mcqCache: {}
+  };
 
-function confirmEndSession() {
-  if (confirm("Are you sure you want to end this practice session? Your progress so far is saved.")) {
-    showSessionSummary();
-  }
-}
+  showExamRunner();
+  document.getElementById('practice-setup-card').classList.add('hidden');
 
-function showSessionSummary() {
-  document.getElementById('practice-runner').classList.add('hidden');
-  document.getElementById('session-summary').classList.remove('hidden');
-  
-  const answers = state.practice.answers;
-  const total = answers.length;
-  const correct = answers.filter(a => a.is_correct).length;
-  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-  
-  const totalTime = answers.reduce((acc, a) => acc + a.time_spent, 0);
-  const avgTime = total > 0 ? Math.round(totalTime / total) : 0;
-  
-  document.getElementById('summary-correct-ratio').textContent = `${correct}/${total}`;
-  document.getElementById('summary-percentage').textContent = `${pct}%`;
-  document.getElementById('summary-avg-time').textContent = `${avgTime}s`;
-  
-  // Render per-topic breakdown
-  const topicStats = {};
-  answers.forEach(ans => {
-    if (!topicStats[ans.topic_name]) {
-      topicStats[ans.topic_name] = { total: 0, correct: 0 };
-    }
-    topicStats[ans.topic_name].total++;
-    if (ans.is_correct) topicStats[ans.topic_name].correct++;
-  });
-  
-  const breakdownBox = document.getElementById('summary-topic-breakdown');
-  breakdownBox.innerHTML = '';
-  
-  for (const [topic, s] of Object.entries(topicStats)) {
-    const accuracy = Math.round((s.correct / s.total) * 100);
-    const div = document.createElement('div');
-    div.className = 'summary-topic-bar-item';
-    div.innerHTML = `
-      <span class="topic-bar-label">${topic}</span>
-      <div style="flex: 1; margin: 0 20px;">
-        <div class="weak-progress-bar">
-          <div class="weak-progress-fill" style="width: ${accuracy}%; background-color: ${accuracy >= 60 ? 'var(--success)' : 'var(--danger)'}"></div>
-        </div>
-      </div>
-      <span class="topic-bar-percent">${s.correct}/${s.total} (${accuracy}%)</span>
-    `;
-    breakdownBox.appendChild(div);
-  }
+  startExamTimer();
+  await loadAllExamQuestions();
 }
 
 // --- Timed Exams Tab ---
@@ -881,10 +732,14 @@ async function openSavedAttempt(attemptId) {
       mcqs: [],
       currentIndex: 0,
       answers: {},
+      timerInterval: null,
       secondsRemaining: 0,
       startTime: null,
       sessionId: attempt.session_id,
       latestAttemptId: attempt.attempt_id,
+      kind: attempt.exam_id && attempt.exam_id.startsWith('practice-') ? 'practice' : 'fixed',
+      submitEndpoint: null,
+      originTab: attempt.exam_id && attempt.exam_id.startsWith('practice-') ? 'practice' : 'exams',
       mcqCache: {}
     };
     document.getElementById('exam-attempts-container').classList.add('hidden');
@@ -908,18 +763,18 @@ async function startExam(examId, examTitle = null) {
       mcqs: startData.mcqs,
       currentIndex: 0,
       answers: {},
+      timerInterval: null,
       secondsRemaining: startData.duration_minutes * 60,
       startTime: Date.now(),
       sessionId: startData.session_id,
       latestAttemptId: null,
+      kind: 'fixed',
+      submitEndpoint: `/api/exams/${examId}/submit`,
+      originTab: 'exams',
       mcqCache: {} // Reset Cache
     };
     
-    document.getElementById('exam-runner-title').textContent = state.exam.title.toUpperCase();
-    document.getElementById('exams-list-container').classList.add('hidden');
-    document.getElementById('exam-attempts-container').classList.add('hidden');
-    document.getElementById('exam-results-summary').classList.add('hidden');
-    document.getElementById('exam-runner').classList.remove('hidden');
+    showExamRunner();
     
     startExamTimer();
     await loadAllExamQuestions();
@@ -928,12 +783,147 @@ async function startExam(examId, examTitle = null) {
   }
 }
 
+function getExamUiElements() {
+  ensureExamWorkspace();
+  return {
+    examsTab: document.getElementById('tab-exams'),
+    list: document.getElementById('exams-list-container'),
+    attempts: document.getElementById('exam-attempts-container'),
+    runner: document.getElementById('exam-runner'),
+    results: document.getElementById('exam-results-summary'),
+    title: document.getElementById('exam-runner-title'),
+    timer: document.getElementById('exam-timer'),
+    counter: document.getElementById('exam-counter'),
+    progress: document.getElementById('exam-progress-fill'),
+    questions: document.getElementById('exam-scrollable-questions-container'),
+  };
+}
+
+function ensureExamWorkspace() {
+  const examsTab = document.getElementById('tab-exams');
+  if (!examsTab) return;
+
+  if (!document.getElementById('exams-list-container')) {
+    examsTab.insertAdjacentHTML('afterbegin', `<div id="exams-list-container" class="hidden"></div>`);
+  }
+  if (!document.getElementById('exam-attempts-container')) {
+    examsTab.insertAdjacentHTML('beforeend', `<div id="exam-attempts-container" class="content-card hidden"></div>`);
+  }
+
+  const runner = document.getElementById('exam-runner');
+  const runnerNeedsBuild = !runner || !document.getElementById('exam-runner-title') || !document.getElementById('exam-scrollable-questions-container');
+  const runnerMarkup = `
+    <div class="runner-header" style="position: sticky; top: 0; background-color: var(--surface); z-index: 10; padding: 12px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 20px;">
+      <span class="session-badge" id="exam-runner-title">Diagnostic Exam 1</span>
+      <span class="timer-badge" id="exam-timer">Time Left: 30:00</span>
+      <span class="question-progress" id="exam-counter">0 of 30 Answered</span>
+    </div>
+    <div class="progress-bar-container" style="margin-bottom: 24px;">
+      <div class="progress-bar-fill" id="exam-progress-fill"></div>
+    </div>
+    <div id="exam-scrollable-questions-container" class="exam-scrollable-container" style="display: flex; flex-direction: column; gap: 30px;"></div>
+    <div class="exam-nav-actions" style="justify-content: center; margin-top: 36px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+      <button class="btn success-btn" id="exam-submit-btn" onclick="confirmSubmitExam()" style="width: 100%; max-width: 400px; font-size: 16px; padding: 14px 28px; border-radius: var(--border-radius-sm);">Submit Exam</button>
+    </div>
+  `;
+  if (!runner) {
+    examsTab.insertAdjacentHTML('beforeend', `<div id="exam-runner" class="content-card hidden readable-width-container">${runnerMarkup}</div>`);
+  } else if (runnerNeedsBuild) {
+    runner.innerHTML = runnerMarkup;
+  }
+
+  const results = document.getElementById('exam-results-summary');
+  const resultsNeedsBuild = !results || !document.getElementById('exam-res-score') || !document.getElementById('exam-analysis-drawer');
+  const resultsMarkup = `
+    <div class="exam-results-layout">
+      <div class="exam-results-main">
+        <div class="summary-congrats">
+          <span class="congrats-emoji">📊</span>
+          <h2 id="exam-result-title">Exam Results</h2>
+          <p>Review your score, answer choices, and related practice.</p>
+        </div>
+        <div class="summary-stats-row">
+          <div class="summary-stat-box"><span class="stat-val" id="exam-res-score">0/0</span><span class="stat-lbl">Final Score</span></div>
+          <div class="summary-stat-box"><span class="stat-val" id="exam-res-pct">0%</span><span class="stat-lbl">Percentage</span></div>
+          <div class="summary-stat-box"><span class="stat-val" id="exam-res-time">0s</span><span class="stat-lbl">Total Time</span></div>
+        </div>
+        <div class="summary-section">
+          <h3>Per-Topic Accuracy</h3>
+          <div class="summary-topic-bars" id="exam-res-topic-breakdown"></div>
+        </div>
+        <div class="review-answers-box">
+          <h3>Detailed Question Review</h3>
+          <p class="muted-text">Incorrect questions display related mock practice questions to try.</p>
+          <div id="exam-res-questions-review"></div>
+        </div>
+        <div class="summary-actions" style="margin-top: 30px;">
+          <button class="btn primary-btn" id="exam-results-primary-action" onclick="resetExamsTab()">Back to Model Tests</button>
+          <button class="btn secondary-btn" id="exam-results-secondary-action" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
+        </div>
+      </div>
+      <aside id="exam-analysis-drawer" class="analysis-drawer">
+        <div class="analysis-drawer-header">
+          <h3>AI Tutor Insights</h3>
+          <span class="analysis-status-pill" id="analysis-status-pill">Loading</span>
+        </div>
+        <div class="analysis-drawer-body">
+          <div id="drawer-loading-view" class="drawer-loading-card">
+            <div class="drawer-loading-content">
+              <div class="tutor-loading-spinner"></div>
+              <h4>Generating Analysis</h4>
+              <p>Results are ready. Gemini analysis is being stored and will appear here automatically.</p>
+            </div>
+          </div>
+          <div id="drawer-analysis-view" class="hidden">
+            <div class="drawer-summary-card"><h4>Quantitative Performance Summary</h4><p id="drawer-feedback-summary">Summary text goes here...</p></div>
+            <div class="drawer-list-card weak-card"><h5>Concepts Needing Fixes</h5><ul id="drawer-feedback-weak"></ul></div>
+            <div class="drawer-list-card strong-card"><h5>Key Strengths & Praise</h5><ul id="drawer-feedback-strong"></ul></div>
+            <div class="drawer-list-card plan-card"><h5>Personalized Study Plan</h5><ul id="drawer-feedback-tips"></ul></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  `;
+  if (!results) {
+    examsTab.insertAdjacentHTML('beforeend', `<div id="exam-results-summary" class="content-card hidden">${resultsMarkup}</div>`);
+  } else if (resultsNeedsBuild) {
+    results.innerHTML = resultsMarkup;
+  }
+}
+
+function assertExamUiReady() {
+  const ui = getExamUiElements();
+  const missing = Object.entries(ui)
+    .filter(([, el]) => !el)
+    .map(([name]) => name);
+  if (missing.length > 0) {
+    throw new Error(`Exam screen is missing required UI elements: ${missing.join(', ')}. Please hard refresh the page and try again.`);
+  }
+  return ui;
+}
+
+function showExamRunner() {
+  const ui = assertExamUiReady();
+  switchPortalTab('exams');
+  ui.title.textContent = state.exam.title.toUpperCase();
+  ui.list.classList.add('hidden');
+  ui.attempts.classList.add('hidden');
+  ui.results.classList.add('hidden');
+  ui.runner.classList.remove('hidden');
+}
+
 function startExamTimer() {
   if (state.exam.timerInterval) {
     clearInterval(state.exam.timerInterval);
   }
   
-  const timerLabel = document.getElementById('exam-timer');
+  const { timer: timerLabel } = assertExamUiReady();
+  const setTimerLabel = () => {
+    const mins = Math.floor(state.exam.secondsRemaining / 60);
+    const secs = state.exam.secondsRemaining % 60;
+    timerLabel.textContent = `Time Left: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+  setTimerLabel();
   
   state.exam.timerInterval = setInterval(() => {
     state.exam.secondsRemaining--;
@@ -942,9 +932,7 @@ function startExamTimer() {
       alert("Time is up! Submitting exam automatically.");
       submitExam();
     } else {
-      const mins = Math.floor(state.exam.secondsRemaining / 60);
-      const secs = state.exam.secondsRemaining % 60;
-      timerLabel.textContent = `Time Left: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      setTimerLabel();
     }
   }, 1000);
 }
@@ -1078,9 +1066,11 @@ async function submitExam() {
   document.getElementById('exam-res-topic-breakdown').innerHTML = `<div class="loading-placeholder"><p>Calculating topic accuracies...</p></div>`;
   document.getElementById('exam-res-questions-review').innerHTML = `<div class="loading-placeholder"><p>Loading question review...</p></div>`;
   setAnalysisLoadingState();
+  renderExamResult(buildInstantExamResult(answers, timeTaken), timeTaken);
 
   try {
-    const res = await apiRequest(`/api/exams/${state.exam.examId}/submit`, 'POST', payload);
+    const submitEndpoint = state.exam.submitEndpoint || `/api/exams/${state.exam.examId}/submit`;
+    const res = await apiRequest(submitEndpoint, 'POST', payload);
     state.exam.latestAttemptId = res.attempt_id;
     renderExamResult(res, timeTaken);
     beginFeedbackPolling(res.attempt_id);
@@ -1107,6 +1097,70 @@ async function submitExam() {
   }
 }
 
+function buildInstantExamResult(answers, timeTaken) {
+  const details = [];
+  const topicMap = {};
+  let correct = 0;
+
+  answers.forEach(answer => {
+    const mcq = state.exam.mcqCache[answer.mcq_id] || state.exam.mcqs.find(q => q.id === answer.mcq_id) || {};
+    const correctOption = (mcq.correct_answer && mcq.correct_answer.option) || 'A';
+    const selectedOption = answer.selected_option || '';
+    const isCorrect = selectedOption.toUpperCase() === correctOption.toUpperCase();
+    if (isCorrect) correct++;
+
+    const related = !isCorrect
+      ? ((mcq.practice_related_questions && mcq.practice_related_questions.length)
+          ? mcq.practice_related_questions
+          : buildCachedRelatedPractice(mcq, answer.mcq_id))
+      : [];
+
+    details.push({
+      mcq_id: answer.mcq_id,
+      selected_option: selectedOption,
+      correct_option: correctOption,
+      is_correct: isCorrect,
+      practice_related_questions: related
+    });
+
+    const chapter = mcq.chapter_name || 'Unknown';
+    const topic = mcq.topic_name || 'General';
+    const key = `${chapter}::${topic}`;
+    if (!topicMap[key]) {
+      topicMap[key] = { chapter, topic, total: 0, correct: 0 };
+    }
+    topicMap[key].total++;
+    if (isCorrect) topicMap[key].correct++;
+  });
+
+  const total = details.length;
+  return {
+    attempt_id: null,
+    exam_id: state.exam.examId,
+    exam_title: state.exam.title,
+    session_id: state.exam.sessionId,
+    time_taken_seconds: timeTaken,
+    total,
+    correct,
+    score_percentage: total ? (correct / total) * 100 : 0,
+    details,
+    topic_breakdown: Object.values(topicMap),
+    feedback_status: 'pending',
+    feedback: null
+  };
+}
+
+function buildCachedRelatedPractice(mcq, mcqId) {
+  const topicName = mcq.topic_name || '';
+  return (state.exam.mcqs || [])
+    .filter(item => item.id !== mcqId && (!topicName || item.topic_name === topicName))
+    .slice(0, 3)
+    .map(item => {
+      const cached = state.exam.mcqCache[item.id];
+      return cached && cached.question ? cached.question : `${item.topic_name || 'Related'} practice question #${item.id}`;
+    });
+}
+
 function renderExamResult(result, fallbackTime = 0) {
   const timeTaken = result.time_taken_seconds || fallbackTime || 0;
   document.getElementById('exam-result-title').textContent = result.exam_title || state.exam.title || 'Exam Results';
@@ -1116,6 +1170,7 @@ function renderExamResult(result, fallbackTime = 0) {
 
   renderTopicBreakdown(result);
   renderQuestionReview(result.details || []);
+  configureResultActions();
 
   if (result.feedback) {
     state.latestExamFeedback = result.feedback;
@@ -1124,6 +1179,28 @@ function renderExamResult(result, fallbackTime = 0) {
   } else {
     setAnalysisLoadingState();
   }
+}
+
+function configureResultActions() {
+  const primary = document.getElementById('exam-results-primary-action');
+  const secondary = document.getElementById('exam-results-secondary-action');
+  if (!primary || !secondary) return;
+
+  if (state.exam.kind === 'practice') {
+    primary.textContent = 'Start New Practice';
+    primary.onclick = () => {
+      resetPracticeTab();
+      switchPortalTab('practice');
+    };
+    secondary.textContent = 'Back to Dashboard';
+    secondary.onclick = () => switchPortalTab('dashboard');
+    return;
+  }
+
+  primary.textContent = 'Back to Model Tests';
+  primary.onclick = () => resetExamsTab();
+  secondary.textContent = 'Back to Dashboard';
+  secondary.onclick = () => switchPortalTab('dashboard');
 }
 
 function renderTopicBreakdown(result) {
@@ -1586,10 +1663,6 @@ async function loadAnalytics() {
 
 function startHeatmapTopicPractice(topicName) {
   if (confirm(`Do you want to start a 10-question practice session on "${topicName}"?`)) {
-    switchPortalTab('practice');
-    document.getElementById('practice-mode').value = 'adaptive';
-    document.getElementById('practice-count').value = 10;
-    
     setTimeout(async () => {
       const payload = {
         mode: 'adaptive',
@@ -1600,21 +1673,11 @@ function startHeatmapTopicPractice(topicName) {
       
       try {
         const sessionData = await apiRequest('/api/practice/session', 'POST', payload);
-        state.practice = {
-          sessionId: sessionData.session_id,
-          mcqs: sessionData.mcqs,
-          currentIndex: 0,
-          answers: [],
-          mode: 'adaptive'
-        };
-        document.getElementById('practice-session-badge').textContent = `ADAPTIVE MODE`;
-        document.getElementById('practice-setup-card').classList.add('hidden');
-        document.getElementById('practice-runner').classList.remove('hidden');
-        await loadPracticeMCQ();
+        await startPracticeExamFromSession(sessionData, 'adaptive', 10);
       } catch (e) {
         alert("Failed to start session: " + e.message);
       }
-    }, 100);
+    }, 0);
   }
 }
 

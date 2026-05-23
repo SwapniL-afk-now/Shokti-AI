@@ -97,4 +97,5 @@ async def get_mcq(mcq_id: int, db: AsyncSession = Depends(get_db_dep)):
         source_quote=r.get("source_quote"),
         pdf_page_number=r.get("pdf_page_number"),
         explanation=None,
+        practice_related_questions=practice_related if isinstance(practice_related, list) else [],
     )

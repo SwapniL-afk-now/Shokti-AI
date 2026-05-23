@@ -190,3 +190,58 @@ async def test_frontend_user_flow(async_client: AsyncClient):
     assert stats2["avg_time_seconds"] >= 0.0
     assert "strongest_topic" in stats2
     assert "weakest_topic" in stats2
+
+
+async def test_practice_session_submits_like_exam_attempt(async_client: AsyncClient):
+    reg_res = await async_client.post("/api/auth/register", json={
+        "email": "practice_exam_flow@shokti.com",
+        "password": "mypassword123",
+        "name": "Practice Exam Student",
+    })
+    assert reg_res.status_code == 200
+    headers = {"Authorization": f"Bearer {reg_res.json()['access_token']}"}
+
+    session_res = await async_client.post(
+        "/api/practice/session",
+        headers=headers,
+        json={"mode": "adaptive", "count": 5, "topic_name": None, "chapter_name": None},
+    )
+    assert session_res.status_code == 200
+    session_data = session_res.json()
+    mcqs = session_data["mcqs"]
+    assert mcqs
+
+    answers = []
+    for item in mcqs:
+        detail_res = await async_client.get(f"/api/mcqs/{item['id']}", headers=headers)
+        assert detail_res.status_code == 200
+        detail = detail_res.json()
+        wrong_option = next(opt for opt in ["A", "B", "C", "D"] if opt != detail["correct_answer"]["option"])
+        answers.append({"mcq_id": item["id"], "selected_option": wrong_option})
+
+    submit_res = await async_client.post(
+        f"/api/practice/sessions/{session_data['session_id']}/submit",
+        headers=headers,
+        json={
+            "session_id": session_data["session_id"],
+            "time_taken_seconds": 42,
+            "answers": answers,
+        },
+    )
+    assert submit_res.status_code == 200
+    result = submit_res.json()
+    assert result["attempt_id"]
+    assert result["exam_id"].startswith("practice-")
+    assert result["exam_title"] == "Practice Exam"
+    assert result["time_taken_seconds"] == 42
+    assert result["total"] == len(answers)
+    assert result["feedback_status"] == "pending"
+    assert result["feedback"] is None
+    assert all("is_correct" in detail for detail in result["details"])
+    assert any(detail["practice_related_questions"] for detail in result["details"] if not detail["is_correct"])
+
+    saved_res = await async_client.get(f"/api/exams/attempts/{result['attempt_id']}", headers=headers)
+    assert saved_res.status_code == 200
+    saved = saved_res.json()
+    assert saved["exam_id"] == result["exam_id"]
+    assert saved["details"] == result["details"]

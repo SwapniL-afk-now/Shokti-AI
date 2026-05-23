@@ -288,87 +288,6 @@
             <button class="btn primary-btn btn-full" onclick="launchPracticeSession()">Launch Session 🚀</button>
           </div>
           
-          <!-- Interactive Session Runner -->
-          <div id="practice-runner" class="content-card hidden readable-width-container">
-            <div class="runner-header">
-              <span class="session-badge" id="practice-session-badge">Adaptive Mode</span>
-              <span class="question-progress" id="practice-question-counter">Question 1 of 10</span>
-              <button class="btn danger-btn btn-sm" onclick="confirmEndSession()">End Session</button>
-            </div>
-            
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" id="practice-progress-fill"></div>
-            </div>
-            
-            <div class="question-box">
-              <div class="question-metadata">
-                <span class="meta-tag" id="q-topic-tag">Topic</span>
-                <span class="meta-tag difficulty-tag" id="q-difficulty-tag">Medium</span>
-              </div>
-              <h1 class="question-text" id="q-text">Question text</h1>
-            </div>
-            
-            <div class="options-grid" id="q-options">
-              <button class="option-btn" onclick="selectOption('A')"><span class="opt-letter">A</span> <span class="opt-text">Option A</span></button>
-              <button class="option-btn" onclick="selectOption('B')"><span class="opt-letter">B</span> <span class="opt-text">Option B</span></button>
-              <button class="option-btn" onclick="selectOption('C')"><span class="opt-letter">C</span> <span class="opt-text">Option C</span></button>
-              <button class="option-btn" onclick="selectOption('D')"><span class="opt-letter">D</span> <span class="opt-text">Option D</span></button>
-            </div>
-            
-            <!-- Immediate feedback reveal card -->
-            <div id="feedback-card" class="feedback-card hidden">
-              <div class="feedback-status" id="feedback-status-heading">
-                <span class="feedback-icon" id="feedback-icon-val">✅</span>
-                <span class="status-msg" id="feedback-status-text">Correct!</span>
-              </div>
-              
-              <div class="explanation-box">
-                <strong>Explanation & Info:</strong>
-                <div id="explanation-text">Explanation content.</div>
-              </div>
-              
-              <div class="feedback-footer">
-                <span class="review-schedule" id="next-review-badge">⚡ Scheduled review: 3 days</span>
-                <button class="btn primary-btn" id="next-question-btn" onclick="goToNextQuestion()">Next Question ➡️</button>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Session Summary Dashboard -->
-          <div id="session-summary" class="content-card hidden readable-width-container">
-            <div class="summary-congrats">
-              <span class="congrats-emoji">🏆</span>
-              <h2>Session Complete!</h2>
-              <p>You've completed your adaptive practice session.</p>
-            </div>
-            
-            <div class="summary-stats-row">
-              <div class="summary-stat-box">
-                <span class="stat-val" id="summary-correct-ratio">0/0</span>
-                <span class="stat-lbl">Questions</span>
-              </div>
-              <div class="summary-stat-box">
-                <span class="stat-val" id="summary-percentage">0%</span>
-                <span class="stat-lbl">Accuracy</span>
-              </div>
-              <div class="summary-stat-box">
-                <span class="stat-val" id="summary-avg-time">0s</span>
-                <span class="stat-lbl">Avg Response Time</span>
-              </div>
-            </div>
-            
-            <div class="summary-section">
-              <h3>Performance by Topic</h3>
-              <div class="summary-topic-bars" id="summary-topic-breakdown">
-                <!-- Dynamic bars -->
-              </div>
-            </div>
-            
-            <div class="summary-actions">
-              <button class="btn primary-btn" onclick="resetPracticeTab()">Start New Session</button>
-              <button class="btn secondary-btn" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
-            </div>
-          </div>
         </section>
         
         <!-- C. Fixed Exams Tab -->
@@ -469,8 +388,8 @@
                 </div>
                 
                 <div class="summary-actions" style="margin-top: 30px;">
-                  <button class="btn primary-btn" onclick="resetExamsTab()">Back to Model Tests</button>
-                  <button class="btn secondary-btn" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
+                  <button class="btn primary-btn" id="exam-results-primary-action" onclick="resetExamsTab()">Back to Model Tests</button>
+                  <button class="btn secondary-btn" id="exam-results-secondary-action" onclick="switchPortalTab('dashboard')">Back to Dashboard</button>
                 </div>
               </div>
 
@@ -671,6 +590,6 @@
   </div>
   
   <!-- JavaScript Application Script -->
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260523-practice-exam-format"></script>
 </body>
 </html>

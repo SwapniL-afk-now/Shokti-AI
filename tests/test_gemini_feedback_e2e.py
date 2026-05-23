@@ -2,11 +2,26 @@ import pytest
 from httpx import AsyncClient
 import sqlite3
 import json
+import asyncio
 from unittest.mock import patch
 import shokti.core.config
 from shokti.api.schemas import ExamFeedback, WeakTopicFeedback, StrongTopicFeedback
 
 pytestmark = pytest.mark.asyncio
+
+
+async def wait_for_feedback(async_client: AsyncClient, attempt_id: str, headers: dict, retries: int = 20):
+    for _ in range(retries):
+        feedback_res = await async_client.get(
+            f"/api/exams/attempts/{attempt_id}/feedback",
+            headers=headers,
+        )
+        assert feedback_res.status_code == 200
+        data = feedback_res.json()
+        if data["feedback_status"] == "ready":
+            return data
+        await asyncio.sleep(0.05)
+    return data
 
 
 async def test_gemini_feedback_and_related_questions_flow(async_client: AsyncClient):
@@ -110,12 +125,7 @@ async def test_gemini_feedback_and_related_questions_flow(async_client: AsyncCli
         assert detail["practice_related_questions"] == prq_data
         
         # C. Gemini feedback is stored for the saved attempt and can be reviewed later.
-        feedback_res = await async_client.get(
-            f"/api/exams/attempts/{data['attempt_id']}/feedback",
-            headers=headers,
-        )
-        assert feedback_res.status_code == 200
-        feedback_data = feedback_res.json()
+        feedback_data = await wait_for_feedback(async_client, data["attempt_id"], headers)
         assert feedback_data["feedback_status"] == "ready"
         feedback = feedback_data["feedback"]
         assert feedback is not None
@@ -176,17 +186,43 @@ async def test_exam_submission_returns_local_feedback_when_ai_is_unavailable(asy
     assert data["details"][0]["correct_option"] == "A"
     assert data["feedback"] is None
 
-    feedback_res = await async_client.get(
-        f"/api/exams/attempts/{data['attempt_id']}/feedback",
-        headers=headers,
-    )
-    assert feedback_res.status_code == 200
-    feedback_data = feedback_res.json()
+    feedback_data = await wait_for_feedback(async_client, data["attempt_id"], headers)
     assert feedback_data["feedback_status"] == "ready"
     assert feedback_data["feedback_source"] == "local_fallback"
     assert feedback_data["feedback"]["overall_summary"]
     assert feedback_data["feedback"]["weak_topics"]
     assert feedback_data["feedback"]["personalized_study_recommendations"]
+
+
+async def test_wrong_answer_gets_related_practice_fallback_when_not_seeded(async_client: AsyncClient):
+    reg_res = await async_client.post("/api/auth/register", json={
+        "email": "related_fallback_student@shokti.com",
+        "password": "password123",
+        "name": "Related Fallback Student"
+    })
+    assert reg_res.status_code == 200
+    headers = {"Authorization": f"Bearer {reg_res.json()['access_token']}"}
+
+    exams_res = await async_client.get("/api/exams", headers=headers)
+    exam_id = exams_res.json()[0]["exam_id"]
+
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    conn.execute("UPDATE question_bank SET practice_related_questions = ? WHERE id = ?", ("[]", 1))
+    conn.commit()
+    conn.close()
+
+    with patch("shokti.api.routers.exams._load_gemini_api_key", side_effect=RuntimeError("no key")):
+        submit_res = await async_client.post(
+            f"/api/exams/{exam_id}/submit",
+            headers=headers,
+            json=[{"mcq_id": 1, "selected_option": "B"}],
+        )
+
+    assert submit_res.status_code == 200
+    detail = submit_res.json()["details"][0]
+    assert detail["is_correct"] is False
+    assert detail["practice_related_questions"]
+    assert any("Pteris" in item or "Riccia" in item for item in detail["practice_related_questions"])
 
 
 async def test_multiple_attempts_are_saved_newest_first(async_client: AsyncClient):

@@ -128,6 +128,7 @@ class MCQDetailResponse(MCQListItem):
     source_quote: str | None
     pdf_page_number: int | None
     explanation: str | None
+    practice_related_questions: list[str] = []
 
     class Config:
         from_attributes = True
