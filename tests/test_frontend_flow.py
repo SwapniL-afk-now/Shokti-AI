@@ -1,5 +1,8 @@
 import pytest
+import sqlite3
+from pathlib import Path
 from httpx import AsyncClient
+import shokti.core.config
 
 pytestmark = pytest.mark.asyncio
 
@@ -151,7 +154,10 @@ async def test_frontend_user_flow(async_client: AsyncClient):
     assert "session_id" in exam_start_data
     
     # Submit exam answers
-    exam_answers = [{"mcq_id": q["id"], "selected_option": "B"} for q in exam_mcqs]
+    exam_answers = [
+        {"mcq_id": q["id"], "selected_option": "B", "time_spent_seconds": index + 3}
+        for index, q in enumerate(exam_mcqs)
+    ]
     submit_res = await async_client.post(
         f"/api/exams/{exam_id}/submit",
         headers=headers,
@@ -181,6 +187,22 @@ async def test_frontend_user_flow(async_client: AsyncClient):
     attempts_res = await async_client.get(f"/api/exams/{exam_id}/attempts", headers=headers)
     assert attempts_res.status_code == 200
     assert attempts_res.json()[0]["attempt_id"] == submit_data["attempt_id"]
+
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        """
+        SELECT time_spent_seconds, confidence_rating, session_id
+        FROM student_answer_log
+        WHERE session_id = ?
+        ORDER BY mcq_id
+        """,
+        (exam_start_data["session_id"],),
+    ).fetchall()
+    conn.close()
+    assert len(rows) == len(exam_mcqs)
+    assert {row["time_spent_seconds"] for row in rows} == {answer["time_spent_seconds"] for answer in exam_answers}
+    assert all(row["confidence_rating"] in (1, 2, 3, 4) for row in rows)
 
     # 9. Verify enhanced academic statistics populate profile/dashboard correctly
     stats_res2 = await async_client.get("/api/student/stats", headers=headers)
@@ -217,7 +239,11 @@ async def test_practice_session_submits_like_exam_attempt(async_client: AsyncCli
         assert detail_res.status_code == 200
         detail = detail_res.json()
         wrong_option = next(opt for opt in ["A", "B", "C", "D"] if opt != detail["correct_answer"]["option"])
-        answers.append({"mcq_id": item["id"], "selected_option": wrong_option})
+        answers.append({
+            "mcq_id": item["id"],
+            "selected_option": wrong_option,
+            "time_spent_seconds": len(answers) + 2,
+        })
 
     submit_res = await async_client.post(
         f"/api/practice/sessions/{session_data['session_id']}/submit",
@@ -238,6 +264,8 @@ async def test_practice_session_submits_like_exam_attempt(async_client: AsyncCli
     assert result["feedback_status"] == "pending"
     assert result["feedback"] is None
     assert all("is_correct" in detail for detail in result["details"])
+    assert all("time_spent_seconds" in detail for detail in result["details"])
+    assert all("confidence_rating" in detail for detail in result["details"])
     assert any(detail["practice_related_questions"] for detail in result["details"] if not detail["is_correct"])
 
     saved_res = await async_client.get(f"/api/exams/attempts/{result['attempt_id']}", headers=headers)
@@ -245,3 +273,31 @@ async def test_practice_session_submits_like_exam_attempt(async_client: AsyncCli
     saved = saved_res.json()
     assert saved["exam_id"] == result["exam_id"]
     assert saved["details"] == result["details"]
+
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        """
+        SELECT time_spent_seconds, confidence_rating
+        FROM student_answer_log
+        WHERE session_id = ?
+        ORDER BY mcq_id
+        """,
+        (session_data["session_id"],),
+    ).fetchall()
+    conn.close()
+    assert len(rows) == len(answers)
+    assert {row["time_spent_seconds"] for row in rows} == {answer["time_spent_seconds"] for answer in answers}
+    assert all(row["confidence_rating"] in (1, 2, 3, 4) for row in rows)
+
+
+def test_question_review_ui_shows_time_spent_per_mcq():
+    app_js = Path(__file__).resolve().parents[1] / "static" / "app.js"
+    styles_css = Path(__file__).resolve().parents[1] / "static" / "styles.css"
+
+    app_source = app_js.read_text()
+    css_source = styles_css.read_text()
+
+    assert "Time spent:" in app_source
+    assert "formatQuestionTime(item.time_spent_seconds" in app_source
+    assert ".review-time-badge" in css_source

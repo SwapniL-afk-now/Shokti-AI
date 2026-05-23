@@ -57,7 +57,12 @@ class ExamFeedbackService:
     ) -> str:
         topic_lines = "\n".join(
             f"  - {c['chapter']} > {c['topic']}: {c['correct']}/{c['total']} correct "
-            f"({round(c['correct'] / c['total'] * 100) if c['total'] > 0 else 0}% accuracy)"
+            f"({round(c['correct'] / c['total'] * 100) if c['total'] > 0 else 0}% accuracy), "
+            f"avg time {c.get('avg_time_seconds', 0):.1f}s, "
+            f"lucky guesses {c.get('lucky_guess_count', 0)}, "
+            f"confident masters {c.get('confident_master_count', 0)}, "
+            f"confident mistakes {c.get('confident_mistake_count', 0)}, "
+            f"no-knowledge answers {c.get('no_knowledge_count', 0)}"
             for c in chapter_results
         )
         return f"""\
@@ -75,6 +80,7 @@ Based on this, provide:
 4. personalized_study_recommendations: exactly 5 concrete study tips
 
 Rules:
+- Use timing/confidence signals: fast wrong = confident mistake/misconception risk; slow wrong = no-knowledge gap; fast correct may be lucky guess and needs verification.
 - If no weak topics exist, return empty list for weak_topics
 - If no strong topics exist, return empty list for strong_topics
 - focus_recommendations must be specific, not generic ("read more")

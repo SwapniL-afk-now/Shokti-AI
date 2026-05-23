@@ -258,7 +258,7 @@ async def get_confidence_profile(
 ):
     result = await db.execute(
         text("""
-            SELECT is_correct, time_spent_seconds
+            SELECT is_correct, time_spent_seconds, confidence_rating
             FROM student_answer_log
             WHERE student_id = :sid AND time_spent_seconds IS NOT NULL
         """),
@@ -274,13 +274,27 @@ async def get_confidence_profile(
             no_knowledge=0
         )
 
-    times = [r.time_spent_seconds for r in rows]
+    lucky_guess = sum(1 for r in rows if r.confidence_rating == 1)
+    confident_master = sum(1 for r in rows if r.confidence_rating == 2)
+    confident_mistake = sum(1 for r in rows if r.confidence_rating == 3)
+    no_knowledge = sum(1 for r in rows if r.confidence_rating == 4)
+
+    fallback_rows = [r for r in rows if r.confidence_rating is None]
+    if not fallback_rows:
+        return ConfidenceProfileResponse(
+            lucky_guess=lucky_guess,
+            confident_master=confident_master,
+            confident_mistake=confident_mistake,
+            no_knowledge=no_knowledge
+        )
+
+    times = [r.time_spent_seconds for r in fallback_rows]
     median_time = sorted(times)[len(times) // 2]
 
-    lucky_guess = sum(1 for r in rows if r.is_correct and r.time_spent_seconds <= median_time)
-    confident_master = sum(1 for r in rows if r.is_correct and r.time_spent_seconds > median_time)
-    confident_mistake = sum(1 for r in rows if not r.is_correct and r.time_spent_seconds <= median_time)
-    no_knowledge = sum(1 for r in rows if not r.is_correct and r.time_spent_seconds > median_time)
+    lucky_guess += sum(1 for r in fallback_rows if r.is_correct and r.time_spent_seconds <= median_time)
+    confident_master += sum(1 for r in fallback_rows if r.is_correct and r.time_spent_seconds > median_time)
+    confident_mistake += sum(1 for r in fallback_rows if not r.is_correct and r.time_spent_seconds <= median_time)
+    no_knowledge += sum(1 for r in fallback_rows if not r.is_correct and r.time_spent_seconds > median_time)
 
     return ConfidenceProfileResponse(
         lucky_guess=lucky_guess,

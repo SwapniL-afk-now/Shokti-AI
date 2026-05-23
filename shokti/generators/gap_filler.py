@@ -95,8 +95,14 @@ def get_example_mcqs(conn, chapter_id, exclude_topic_id):
     return [dict(row) for row in mcqs]
 
 
-def build_generation_prompt(topic_data, examples, count: int | None = None):
+def build_generation_prompt(topic_data, examples, count: int | None = None, practice_context: dict | None = None):
     examples_text = json.dumps(examples[:3], ensure_ascii=False, indent=2)
+    context_text = ""
+    if practice_context:
+        context_text = f"""
+practice_session_context:
+{json.dumps(practice_context, ensure_ascii=False, indent=2)}
+"""
     min_mcqs = count if count is not None else MCQ.MCQS_PER_GAP
     exact_or_min = f"exactly {count}" if count is not None else f"at least {min_mcqs}"
     return f"""
@@ -110,16 +116,19 @@ Book pages: {topic_data['book_page_range']}
 Source file: {topic_data['source_file']}
 
 Use Gemini File Search on the "{GEMINI.STORE_DISPLAY_NAME}" store.
+{context_text}
 
 Rules:
-1. Use ONLY content from File Search store.
+1. Use ONLY content retrieved from File Search as ground truth.
 2. Each MCQ must have exactly four options: A, B, C, D.
 3. Match the STYLE of these examples:
 {examples_text}
-4. If quality content is limited, generate fewer MCQs — quality over quantity.
+4. Do not duplicate any provided qbank, generated, weak-risk, or coverage examples.
 5. Difficulty: mixed (easy 30%, medium 50%, hard 20%).
-6. Output language: {MCQ.OUTPUT_LANGUAGE}.
-7. Return ONLY valid JSON. No markdown.
+6. If practice_session_context exists, generate questions that diagnose its target weakness or coverage gap.
+7. Output language: {MCQ.OUTPUT_LANGUAGE}.
+8. If quality grounded content is limited, generate fewer MCQs — quality over quantity.
+9. Return ONLY valid JSON. No markdown.
 
 JSON format:
 {{"topic": "{topic_data['topic_name']}", "number_of_mcqs": ..., "mcqs": [{{...}}]}}
@@ -222,7 +231,8 @@ def insert_mcqs(conn, mcqs, topic_data):
 
 
 def fill_topic(gap: dict, conn: sqlite3.Connection, client, store_name: str,
-               gen_config, cite_config, count: int | None = None) -> int:
+               gen_config, cite_config, count: int | None = None,
+               practice_context: dict | None = None) -> int:
     """
     Fill a single gap topic by generating and inserting MCQs.
 
@@ -250,7 +260,7 @@ def fill_topic(gap: dict, conn: sqlite3.Connection, client, store_name: str,
     try:
         gen_response = generate_with_retries(
             client, gen_config,
-            build_generation_prompt(gap, examples, count=count),
+            build_generation_prompt(gap, examples, count=count, practice_context=practice_context),
             "Generating MCQs",
         )
         generated = GeneratedMCQResponse.model_validate_json(gen_response.text).model_dump()
@@ -284,6 +294,8 @@ def generate_fresh_mcqs(
     store_name: str,
     gen_config,
     cite_config,
+    practice_context: dict | None = None,
+    allow_existing_fallback: bool = True,
 ) -> int:
     """
     Generate exactly `count` fresh MCQs for a topic, bypassing gap threshold.
@@ -311,11 +323,20 @@ def generate_fresh_mcqs(
         "source_file": source_file,
         "mcq_count": 0,
     }
-    inserted = fill_topic(gap, conn, client, store_name, gen_config, cite_config, count=count)
+    inserted = fill_topic(
+        gap,
+        conn,
+        client,
+        store_name,
+        gen_config,
+        cite_config,
+        count=count,
+        practice_context=practice_context,
+    )
 
     # Fill remaining slots from existing generated MCQs for this topic
     remaining = count - inserted
-    if remaining > 0:
+    if allow_existing_fallback and remaining > 0:
         existing = [dict(r) for r in conn.execute("""
             SELECT * FROM question_bank
             WHERE origin = 'generated'

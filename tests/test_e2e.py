@@ -2,11 +2,13 @@ import pytest
 from httpx import AsyncClient
 import sqlite3
 import datetime
+import json
 from unittest.mock import patch
 
 # Import CLI modules for testing
 from shokti.core.config import MCQ
-from shokti.question_selectors.session_builder import build_session
+from shokti.question_selectors.session_builder import build_session, _build_weakness_session
+from shokti.generators.gap_filler import build_generation_prompt
 from shokti.sampling_weights import get_combined_weights
 from shokti.exams.exam_runner import run_exam
 from shokti.spaced_repetition import update_review_date, get_due_mcqs
@@ -301,6 +303,198 @@ def test_semantic_confusion_clustering():
     assert len(clusters) >= 1
     # Check if confusion mapped to expected biological terms
     assert "Archegonium" in clusters[0]["explanation"] or "Antheridium" in clusters[0]["explanation"]
+
+
+def test_confidence_risk_prioritizes_weakness_selection(monkeypatch):
+    import shokti.core.config
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.executescript("""
+        INSERT OR IGNORE INTO students (id, email, password_hash, name)
+        VALUES ('RiskS', 'risk@test.com', 'hash', 'Risk Student');
+        INSERT INTO student_answer_log
+            (student_id, mcq_id, is_correct, time_spent_seconds, confidence_rating, session_type)
+        VALUES
+            ('RiskS', 1, 0, 5, NULL, 'exam1'),
+            ('RiskS', 3, 0, 5, 3, 'exam1');
+    """)
+    conn.commit()
+
+    monkeypatch.setattr("shokti.question_selectors.session_builder.random.random", lambda: 0.5)
+    selected, _ = _build_weakness_session(conn, "RiskS", count=1)
+    conn.close()
+
+    assert selected[0]["topic_id"] == "T2"
+
+
+def test_practice_mix_config_defaults():
+    assert MCQ.QBANK_RATIO == 0.40
+    assert MCQ.GENERATED_RATIO == 0.20
+    assert MCQ.WEAK_TOPIC_RATIO == 0.25
+    assert MCQ.FRESH_GENERATED_RATIO == 0.15
+    assert MCQ.ENABLE_FRESH_GENERATION_IN_PRACTICE is True
+
+
+def test_adaptive_practice_uses_configured_mix(monkeypatch):
+    import shokti.core.config
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    conn.row_factory = sqlite3.Row
+
+    for i in range(13, 33):
+        origin = "generated" if i < 21 else "question_bank"
+        conn.execute("""
+            INSERT INTO question_bank
+                (id, subject, book_id, chapter_id, chapter_name, topic_id, topic_name,
+                 question, options, correct_answer, difficulty, origin)
+            VALUES (?, 'Biology', 'book1', '07', 'Chapter 07', 'T3', 'জিমনোস্পার্ম',
+                    ?, '{"A":"A","B":"B","C":"C","D":"D"}',
+                    '{"option":"A","text":"A"}', 'medium', ?)
+        """, (i, f"Seeded question {i}", origin))
+    for i in range(33, 61):
+        conn.execute("""
+            INSERT INTO question_bank
+                (id, subject, book_id, chapter_id, chapter_name, topic_id, topic_name,
+                 question, options, correct_answer, difficulty, origin)
+            VALUES (?, 'Biology', 'book1', '06', 'Chapter 06', 'T2', 'Riccia',
+                    ?, '{"A":"A","B":"B","C":"C","D":"D"}',
+                    '{"option":"A","text":"A"}', 'medium', 'question_bank')
+        """, (i, f"Weak seeded question {i}"))
+    conn.commit()
+
+    fresh = [dict(r) for r in conn.execute(
+        "SELECT * FROM question_bank WHERE origin='generated' ORDER BY id DESC LIMIT 3"
+    ).fetchall()]
+    monkeypatch.setattr(
+        "shokti.question_selectors.session_builder._generate_fresh_for_session",
+        lambda *args, **kwargs: fresh,
+    )
+
+    selected, comp = build_session(conn, "S1", count=20, mode="adaptive")
+    conn.close()
+
+    assert len(selected) == 20
+    assert comp.qbank_count == 8
+    assert comp.generated_count == 4
+    assert comp.weak_topic_count == 5
+    assert comp.fresh_generated_count == 3
+
+
+def test_adaptive_practice_falls_back_when_fresh_generation_fails(monkeypatch):
+    import shokti.core.config
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    conn.row_factory = sqlite3.Row
+    monkeypatch.setattr(
+        "shokti.question_selectors.session_builder._generate_fresh_for_session",
+        lambda *args, **kwargs: [],
+    )
+
+    selected, comp = build_session(conn, "S1", count=8, mode="adaptive")
+    conn.close()
+
+    assert len(selected) == 8
+    assert comp.fresh_generated_count == 0
+
+
+def test_fresh_generation_prompt_includes_practice_context():
+    topic_data = {
+        "topic_name": "Riccia",
+        "chapter_id": "06",
+        "chapter_name": "Chapter 06",
+        "book_page_range": "76-85",
+        "source_file": "biology_1st.pdf",
+    }
+    context = {
+        "target_session_mode": "adaptive",
+        "target_bucket": "fresh_generated",
+        "selected_filters": {"topic": "Riccia", "chapter": "Chapter 06"},
+        "target_topic_reason": "confident mistake",
+        "requested_mix_percentages": {"qbank": 0.4, "generated": 0.2, "weak": 0.25, "fresh": 0.15},
+        "student_topic_stats": [{"topic_name": "Riccia", "accuracy": 0.2, "confident_mistakes": 2}],
+        "nearby_qbank_examples": [{"question": "Qbank example"}],
+        "nearby_stored_generated_examples": [{"question": "Generated example"}],
+        "weak_confidence_risk_examples": [{"question": "Missed example"}],
+        "coverage_gap_context": [{"topic_name": "Pteris", "mcq_count": 1}],
+    }
+
+    prompt = build_generation_prompt(topic_data, [{"question": "Style example"}], count=3, practice_context=context)
+
+    assert "practice_session_context" in prompt
+    assert "fresh_generated" in prompt
+    assert "requested_mix_percentages" in prompt
+    assert "nearby_qbank_examples" in prompt
+    assert "weak_confidence_risk_examples" in prompt
+    assert "Use Gemini File Search" in prompt
+    assert "Do not duplicate" in prompt
+
+
+def test_generated_mcq_schema_requires_question_and_options():
+    from shokti.generators.gap_filler import GeneratedMCQResponse
+
+    payload = {
+        "topic": "Riccia",
+        "number_of_mcqs": 1,
+        "mcqs": [{
+            "id": 1,
+            "chapter": "Chapter 06",
+            "topic": "Riccia",
+            "source_file": "biology_1st.pdf",
+            "book_page_range": "76-85",
+            "question": "Which structure produces sperm in Riccia?",
+            "options": {"A": "Antheridium", "B": "Archegonium", "C": "Capsule", "D": "Rhizoid"},
+            "correct_answer": {"option": "A", "text": "Antheridium"},
+            "explanation": "Antheridium is the male reproductive organ.",
+            "difficulty": "medium",
+        }],
+    }
+
+    parsed = GeneratedMCQResponse.model_validate(payload)
+    mcq = parsed.mcqs[0]
+
+    assert mcq.question
+    assert mcq.options.A
+    assert mcq.options.B
+    assert mcq.options.C
+    assert mcq.options.D
+    assert mcq.correct_answer.option == "A"
+
+
+def test_fresh_generated_mcqs_are_stored_as_generated_origin():
+    import shokti.core.config
+    from shokti.generators.gap_filler import insert_mcqs
+
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    conn.row_factory = sqlite3.Row
+    topic_data = {
+        "subject": "Biology",
+        "book_id": "book1",
+        "chapter_id": "06",
+        "chapter_name": "Chapter 06",
+        "book_page_range": "76-85",
+        "source_file": "biology_1st.pdf",
+        "topic_id": "T2",
+        "topic_name": "Riccia",
+    }
+    mcqs = [{
+        "question": "Fresh generated persistence test question",
+        "options": {"A": "Antheridium", "B": "Archegonium", "C": "Capsule", "D": "Rhizoid"},
+        "correct_answer": {"option": "A", "text": "Antheridium"},
+        "source_quote": "Antheridium is the male reproductive organ.",
+        "pdf_page_number": 77,
+        "practice_related_questions": ["Related Riccia question"],
+        "difficulty": "medium",
+    }]
+
+    inserted = insert_mcqs(conn, mcqs, topic_data)
+    row = conn.execute(
+        "SELECT origin, options, correct_answer FROM question_bank WHERE question = ?",
+        ("Fresh generated persistence test question",),
+    ).fetchone()
+    conn.close()
+
+    assert inserted == 1
+    assert row["origin"] == "generated"
+    assert json.loads(row["options"])["A"] == "Antheridium"
+    assert json.loads(row["correct_answer"])["option"] == "A"
 
 
 # ==========================================

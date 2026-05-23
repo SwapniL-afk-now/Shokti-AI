@@ -33,6 +33,8 @@ let state = {
     kind: 'fixed',
     submitEndpoint: null,
     originTab: 'exams',
+    lastAnswerAt: null,
+    questionTiming: {},
     mcqCache: {} // Cache complete MCQ details
   },
   
@@ -525,6 +527,17 @@ async function loadChapterTopics(chapterId) {
 // --- Practice Session Runner ---
 function resetPracticeTab() {
   document.getElementById('practice-setup-card').classList.remove('hidden');
+  hidePracticePreparing();
+}
+
+function showPracticePreparing() {
+  const overlay = document.getElementById('practice-preparing-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function hidePracticePreparing() {
+  const overlay = document.getElementById('practice-preparing-overlay');
+  if (overlay) overlay.classList.add('hidden');
 }
 
 async function startQuickPractice(mode) {
@@ -563,10 +576,13 @@ async function launchPracticeSession() {
   };
   
   try {
+    showPracticePreparing();
     const sessionData = await apiRequest('/api/practice/session', 'POST', payload);
     await startPracticeExamFromSession(sessionData, mode, count);
   } catch (e) {
     alert("Failed to start session: " + e.message);
+  } finally {
+    hidePracticePreparing();
   }
 }
 
@@ -598,6 +614,8 @@ async function startPracticeExamFromSession(sessionData, mode = 'adaptive', coun
     kind: 'practice',
     submitEndpoint: `/api/practice/sessions/${sessionData.session_id}/submit`,
     originTab: 'practice',
+    lastAnswerAt: Date.now(),
+    questionTiming: {},
     mcqCache: {}
   };
 
@@ -735,12 +753,14 @@ async function openSavedAttempt(attemptId) {
       timerInterval: null,
       secondsRemaining: 0,
       startTime: null,
-      sessionId: attempt.session_id,
-      latestAttemptId: attempt.attempt_id,
-      kind: attempt.exam_id && attempt.exam_id.startsWith('practice-') ? 'practice' : 'fixed',
-      submitEndpoint: null,
-      originTab: attempt.exam_id && attempt.exam_id.startsWith('practice-') ? 'practice' : 'exams',
-      mcqCache: {}
+    sessionId: attempt.session_id,
+    latestAttemptId: attempt.attempt_id,
+    kind: attempt.exam_id && attempt.exam_id.startsWith('practice-') ? 'practice' : 'fixed',
+    submitEndpoint: null,
+    originTab: attempt.exam_id && attempt.exam_id.startsWith('practice-') ? 'practice' : 'exams',
+    lastAnswerAt: null,
+    questionTiming: {},
+    mcqCache: {}
     };
     document.getElementById('exam-attempts-container').classList.add('hidden');
     document.getElementById('exam-results-summary').classList.remove('hidden');
@@ -766,12 +786,14 @@ async function startExam(examId, examTitle = null) {
       timerInterval: null,
       secondsRemaining: startData.duration_minutes * 60,
       startTime: Date.now(),
-      sessionId: startData.session_id,
-      latestAttemptId: null,
-      kind: 'fixed',
-      submitEndpoint: `/api/exams/${examId}/submit`,
-      originTab: 'exams',
-      mcqCache: {} // Reset Cache
+    sessionId: startData.session_id,
+    latestAttemptId: null,
+    kind: 'fixed',
+    submitEndpoint: `/api/exams/${examId}/submit`,
+    originTab: 'exams',
+    lastAnswerAt: Date.now(),
+    questionTiming: {},
+    mcqCache: {} // Reset Cache
     };
     
     showExamRunner();
@@ -1005,6 +1027,17 @@ async function loadAllExamQuestions() {
 }
 
 function selectExamScrollOption(mcqId, key) {
+  const now = Date.now();
+  if (!state.exam.questionTiming) {
+    state.exam.questionTiming = {};
+  }
+  if (!state.exam.lastAnswerAt) {
+    state.exam.lastAnswerAt = state.exam.startTime || now;
+  }
+  if (state.exam.questionTiming[mcqId] == null) {
+    state.exam.questionTiming[mcqId] = Math.max(1, Math.round((now - state.exam.lastAnswerAt) / 1000));
+    state.exam.lastAnswerAt = now;
+  }
   state.exam.answers[mcqId] = key;
   
   // Highlight visually within this specific question card
@@ -1047,7 +1080,10 @@ async function submitExam() {
   
   const answers = state.exam.mcqs.map(q => ({
     mcq_id: q.id,
-    selected_option: state.exam.answers[q.id] || ''
+    selected_option: state.exam.answers[q.id] || '',
+    time_spent_seconds: state.exam.questionTiming && state.exam.questionTiming[q.id]
+      ? state.exam.questionTiming[q.id]
+      : 0
   }));
   const timeTaken = Math.round((Date.now() - state.exam.startTime) / 1000);
   const payload = {
@@ -1120,6 +1156,7 @@ function buildInstantExamResult(answers, timeTaken) {
       selected_option: selectedOption,
       correct_option: correctOption,
       is_correct: isCorrect,
+      time_spent_seconds: answer.time_spent_seconds || 0,
       practice_related_questions: related
     });
 
@@ -1264,12 +1301,16 @@ function renderQuestionReview(details) {
     const qCard = document.createElement('div');
     qCard.className = `review-question-card ${item.is_correct ? 'correct-review' : 'wrong-review'}`;
     qCard.id = `review-q-${item.mcq_id}`;
+    const timeSpentText = formatQuestionTime(item.time_spent_seconds || 0);
     let html = `
-      <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+      <div class="review-question-meta">
         <strong>Question ID: ${item.mcq_id}</strong>
-        <span style="color: ${item.is_correct ? 'var(--success)' : 'var(--danger)'}; font-weight: bold;">
-          ${item.is_correct ? 'Correct' : 'Incorrect'}
-        </span>
+        <div class="review-question-badges">
+          <span class="review-time-badge">Time spent: ${timeSpentText}</span>
+          <span style="color: ${item.is_correct ? 'var(--success)' : 'var(--danger)'}; font-weight: bold;">
+            ${item.is_correct ? 'Correct' : 'Incorrect'}
+          </span>
+        </div>
       </div>
     `;
 
@@ -1288,6 +1329,14 @@ function renderQuestionReview(details) {
     qCard.innerHTML = html;
     reviewContainer.appendChild(qCard);
   });
+}
+
+function formatQuestionTime(seconds) {
+  const totalSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainder = totalSeconds % 60;
+  return `${minutes}m ${remainder}s`;
 }
 
 function setAnalysisLoadingState() {
@@ -1672,10 +1721,13 @@ function startHeatmapTopicPractice(topicName) {
       };
       
       try {
+        showPracticePreparing();
         const sessionData = await apiRequest('/api/practice/session', 'POST', payload);
         await startPracticeExamFromSession(sessionData, 'adaptive', 10);
       } catch (e) {
         alert("Failed to start session: " + e.message);
+      } finally {
+        hidePracticePreparing();
       }
     }, 0);
   }

@@ -21,9 +21,14 @@ from shokti.api.schemas import (
 from shokti.core.config import DB_PATH, MCQ as MCQ_CONFIG
 from shokti.api.routers.exams import (
     _build_related_question_map,
+    _apply_timing_to_topic_result,
+    _classify_confidence,
+    _empty_topic_result,
     _fill_missing_related_practice,
     _generate_and_store_feedback,
+    _get_student_median_time,
     _load_mcq_meta,
+    _topic_result_to_breakdown,
 )
 
 router = APIRouter(prefix="/api/practice", tags=["practice"])
@@ -94,6 +99,7 @@ async def submit_practice_session(
     mcq_meta = await _load_mcq_meta(db, [answer.mcq_id for answer in answers])
     prq_map = _build_related_question_map(mcq_meta)
     await _fill_missing_related_practice(db, mcq_meta, prq_map)
+    median_time = await _get_student_median_time(db, student.id, [max(0, answer.time_spent_seconds or 0) for answer in answers])
 
     chapter_results: dict[str, dict[str, dict[str, int]]] = {}
     details = []
@@ -107,26 +113,30 @@ async def submit_practice_session(
         correct_parsed = json.loads(row["correct_answer"]) if isinstance(row["correct_answer"], str) else (row["correct_answer"] or {})
         correct_opt = correct_parsed.get("option", "A") if isinstance(correct_parsed, dict) else "A"
         selected_option = (answer.selected_option or "").upper()
-        is_correct = selected_option == correct_opt.upper()
+        time_spent = max(0, answer.time_spent_seconds or 0)
+        is_correct = bool(selected_option) and selected_option == correct_opt.upper()
+        confidence_rating = _classify_confidence(is_correct, time_spent, median_time)
         if is_correct:
             correct_count += 1
 
         await db.execute(
             text("""
                 INSERT INTO student_answer_log (
-                    student_id, mcq_id, is_correct, answered_at, session_type,
-                    session_id, selected_option
+                    student_id, mcq_id, is_correct, confidence_rating, answered_at,
+                    time_spent_seconds, session_type, session_id, selected_option
                 )
                 VALUES (
-                    :student_id, :mcq_id, :is_correct, :answered_at, :session_type,
-                    :session_id, :selected_option
+                    :student_id, :mcq_id, :is_correct, :confidence_rating, :answered_at,
+                    :time_spent_seconds, :session_type, :session_id, :selected_option
                 )
             """),
             {
                 "student_id": student.id,
                 "mcq_id": answer.mcq_id,
                 "is_correct": is_correct,
+                "confidence_rating": confidence_rating,
                 "answered_at": datetime.now(timezone.utc),
+                "time_spent_seconds": time_spent,
                 "session_type": "practice_exam",
                 "session_id": session_id,
                 "selected_option": selected_option,
@@ -136,26 +146,25 @@ async def submit_practice_session(
 
         chapter = row.get("chapter_name") or "Unknown"
         topic = row.get("topic_name") or "Unknown"
-        chapter_results.setdefault(chapter, {}).setdefault(topic, {"total": 0, "correct": 0})
+        chapter_results.setdefault(chapter, {}).setdefault(topic, _empty_topic_result())
         chapter_results[chapter][topic]["total"] += 1
         if is_correct:
             chapter_results[chapter][topic]["correct"] += 1
+        _apply_timing_to_topic_result(chapter_results[chapter][topic], time_spent, confidence_rating)
 
         details.append({
             "mcq_id": answer.mcq_id,
             "selected_option": selected_option,
             "correct_option": correct_opt,
             "is_correct": is_correct,
+            "time_spent_seconds": time_spent,
+            "confidence_rating": confidence_rating,
             "practice_related_questions": [] if is_correct else prq_map.get(answer.mcq_id, []),
         })
 
     total = len(details)
     score_pct = (correct_count / total * 100) if total > 0 else 0.0
-    topic_breakdown = [
-        {"chapter": chapter, "topic": topic, "total": values["total"], "correct": values["correct"]}
-        for chapter, topics in chapter_results.items()
-        for topic, values in topics.items()
-    ]
+    topic_breakdown = _topic_result_to_breakdown(chapter_results)
 
     attempt_id = str(uuid.uuid4())
     exam_id = f"practice-{session_id}"

@@ -38,6 +38,11 @@ security_opt = HTTPBearer(auto_error=False)
 router = APIRouter(prefix="/api/exams", tags=["exams"])
 exam_feedback_adapter = TypeAdapter(ExamFeedback)
 
+CONFIDENCE_LUCKY_GUESS = 1
+CONFIDENCE_MASTER = 2
+CONFIDENCE_MISTAKE = 3
+CONFIDENCE_NO_KNOWLEDGE = 4
+
 
 @router.get("", response_model=list[ExamListItem])
 async def list_exams(
@@ -225,6 +230,7 @@ async def submit_exam(
     mcq_meta = await _load_mcq_meta(db, [answer.mcq_id for answer in answers])
     prq_map = _build_related_question_map(mcq_meta)
     await _fill_missing_related_practice(db, mcq_meta, prq_map)
+    median_time = await _get_student_median_time(db, student.id, [max(0, answer.time_spent_seconds or 0) for answer in answers])
     chapter_results: dict[str, dict[str, dict[str, int]]] = {}
     details = []
     correct_count = 0
@@ -236,54 +242,58 @@ async def submit_exam(
 
         correct_parsed = json.loads(row["correct_answer"]) if isinstance(row["correct_answer"], str) else (row["correct_answer"] or {})
         correct_opt = correct_parsed.get("option", "A") if isinstance(correct_parsed, dict) else "A"
-        is_correct = answer.selected_option.upper() == correct_opt.upper()
+        selected_option = (answer.selected_option or "").upper()
+        time_spent = max(0, answer.time_spent_seconds or 0)
+        is_correct = bool(selected_option) and selected_option == correct_opt.upper()
+        confidence_rating = _classify_confidence(is_correct, time_spent, median_time)
         if is_correct:
             correct_count += 1
 
         await db.execute(
             text("""
                 INSERT INTO student_answer_log (
-                    student_id, mcq_id, is_correct, answered_at, session_type,
-                    session_id, selected_option
+                    student_id, mcq_id, is_correct, confidence_rating, answered_at,
+                    time_spent_seconds, session_type, session_id, selected_option
                 )
                 VALUES (
-                    :student_id, :mcq_id, :is_correct, :answered_at, :session_type,
-                    :session_id, :selected_option
+                    :student_id, :mcq_id, :is_correct, :confidence_rating, :answered_at,
+                    :time_spent_seconds, :session_type, :session_id, :selected_option
                 )
             """),
             {
                 "student_id": student.id,
                 "mcq_id": answer.mcq_id,
                 "is_correct": is_correct,
+                "confidence_rating": confidence_rating,
                 "answered_at": datetime.now(timezone.utc),
+                "time_spent_seconds": time_spent,
                 "session_type": f"exam{exam_id}",
                 "session_id": session_id,
-                "selected_option": answer.selected_option,
+                "selected_option": selected_option,
             },
         )
 
         chapter = row.get("chapter_name") or "Unknown"
         topic = row.get("topic_name") or "Unknown"
-        chapter_results.setdefault(chapter, {}).setdefault(topic, {"total": 0, "correct": 0})
+        chapter_results.setdefault(chapter, {}).setdefault(topic, _empty_topic_result())
         chapter_results[chapter][topic]["total"] += 1
         if is_correct:
             chapter_results[chapter][topic]["correct"] += 1
+        _apply_timing_to_topic_result(chapter_results[chapter][topic], time_spent, confidence_rating)
 
         details.append(ExamAnswerDetailWithPractice(
             mcq_id=answer.mcq_id,
-            selected_option=answer.selected_option,
+            selected_option=selected_option,
             correct_option=correct_opt,
             is_correct=is_correct,
+            time_spent_seconds=time_spent,
+            confidence_rating=confidence_rating,
             practice_related_questions=[] if is_correct else prq_map.get(answer.mcq_id, []),
         ))
 
     total = len(details)
     score_pct = (correct_count / total * 100) if total > 0 else 0.0
-    topic_breakdown = [
-        {"chapter": chapter, "topic": topic, "total": values["total"], "correct": values["correct"]}
-        for chapter, topics in chapter_results.items()
-        for topic, values in topics.items()
-    ]
+    topic_breakdown = _topic_result_to_breakdown(chapter_results)
 
     attempt_id = str(uuid.uuid4())
     await db.execute(
@@ -415,6 +425,83 @@ async def _load_mcq_meta(db: AsyncSession, mcq_ids: list[int]) -> dict[int, dict
         {f"id{i}": mid for i, mid in enumerate(mcq_ids)},
     )
     return {dict(row._mapping)["id"]: dict(row._mapping) for row in result.fetchall()}
+
+
+async def _get_student_median_time(db: AsyncSession, student_id: str, new_times: list[int]) -> float:
+    result = await db.execute(
+        text("""
+            SELECT time_spent_seconds
+            FROM student_answer_log
+            WHERE student_id = :sid AND time_spent_seconds IS NOT NULL AND time_spent_seconds > 0
+        """),
+        {"sid": student_id},
+    )
+    times = [int(row.time_spent_seconds) for row in result.fetchall() if row.time_spent_seconds]
+    times.extend(int(t) for t in new_times if t and t > 0)
+    if not times:
+        return 0.0
+    times.sort()
+    return float(times[len(times) // 2])
+
+
+def _classify_confidence(is_correct: bool, time_spent: int, median_time: float) -> int | None:
+    if time_spent <= 0 or median_time <= 0:
+        return None
+    is_fast = time_spent <= median_time
+    if is_correct and is_fast:
+        return CONFIDENCE_LUCKY_GUESS
+    if is_correct:
+        return CONFIDENCE_MASTER
+    if is_fast:
+        return CONFIDENCE_MISTAKE
+    return CONFIDENCE_NO_KNOWLEDGE
+
+
+def _empty_topic_result() -> dict[str, int]:
+    return {
+        "total": 0,
+        "correct": 0,
+        "time_total_seconds": 0,
+        "timed_count": 0,
+        "lucky_guess_count": 0,
+        "confident_master_count": 0,
+        "confident_mistake_count": 0,
+        "no_knowledge_count": 0,
+    }
+
+
+def _apply_timing_to_topic_result(topic_result: dict, time_spent: int, confidence_rating: int | None) -> None:
+    if time_spent > 0:
+        topic_result["time_total_seconds"] = topic_result.get("time_total_seconds", 0) + time_spent
+        topic_result["timed_count"] = topic_result.get("timed_count", 0) + 1
+    if confidence_rating == CONFIDENCE_LUCKY_GUESS:
+        topic_result["lucky_guess_count"] = topic_result.get("lucky_guess_count", 0) + 1
+    elif confidence_rating == CONFIDENCE_MASTER:
+        topic_result["confident_master_count"] = topic_result.get("confident_master_count", 0) + 1
+    elif confidence_rating == CONFIDENCE_MISTAKE:
+        topic_result["confident_mistake_count"] = topic_result.get("confident_mistake_count", 0) + 1
+    elif confidence_rating == CONFIDENCE_NO_KNOWLEDGE:
+        topic_result["no_knowledge_count"] = topic_result.get("no_knowledge_count", 0) + 1
+
+
+def _topic_result_to_breakdown(chapter_results: dict[str, dict[str, dict]]) -> list[dict]:
+    breakdown = []
+    for chapter, topics in chapter_results.items():
+        for topic, values in topics.items():
+            timed_count = values.get("timed_count", 0) or 0
+            avg_time = (values.get("time_total_seconds", 0) / timed_count) if timed_count else 0.0
+            breakdown.append({
+                "chapter": chapter,
+                "topic": topic,
+                "total": values.get("total", 0),
+                "correct": values.get("correct", 0),
+                "avg_time_seconds": avg_time,
+                "lucky_guess_count": values.get("lucky_guess_count", 0),
+                "confident_master_count": values.get("confident_master_count", 0),
+                "confident_mistake_count": values.get("confident_mistake_count", 0),
+                "no_knowledge_count": values.get("no_knowledge_count", 0),
+            })
+    return breakdown
 
 
 def _build_related_question_map(mcq_meta: dict[int, dict]) -> dict[int, list[str]]:
@@ -596,12 +683,19 @@ def _build_local_exam_feedback(
         chapter_name = item.get("chapter") or "Unknown"
 
         if accuracy < 60:
+            fast_wrong = item.get("confident_mistake_count", 0) or 0
+            slow_wrong = item.get("no_knowledge_count", 0) or 0
+            timing_tip = "Review the textbook explanation for the exact concept tested here."
+            if fast_wrong > 0:
+                timing_tip = "Slow down on this topic: your fast wrong answers suggest a confident misconception."
+            elif slow_wrong > 0:
+                timing_tip = "Rebuild the basics for this topic: slow wrong answers suggest a missing-knowledge gap."
             weak_topics.append(WeakTopicFeedback(
                 topic_name=topic_name,
                 chapter_name=chapter_name,
                 accuracy_percentage=accuracy,
                 focus_recommendations=[
-                    "Review the textbook explanation for the exact concept tested here.",
+                    timing_tip,
                     "Redo the wrong MCQs and say why each incorrect option is wrong.",
                     "Practice related questions from this topic before the next mock exam.",
                 ],
@@ -626,6 +720,13 @@ def _build_local_exam_feedback(
     else:
         summary = f"You answered {correct}/{total} correctly. Treat this as a diagnostic map: review the incorrect answers first, then drill the related practice questions."
 
+    fast_wrong_total = sum(item.get("confident_mistake_count", 0) or 0 for item in chapter_results)
+    slow_wrong_total = sum(item.get("no_knowledge_count", 0) or 0 for item in chapter_results)
+    if fast_wrong_total:
+        summary += f" {fast_wrong_total} fast wrong answer(s) suggest confident misconceptions to slow down and verify."
+    if slow_wrong_total:
+        summary += f" {slow_wrong_total} slow wrong answer(s) suggest knowledge gaps that need concept rebuilding."
+
     return ExamFeedback(
         overall_summary=summary,
         weak_topics=weak_topics[:5],
@@ -634,7 +735,7 @@ def _build_local_exam_feedback(
             "Start with the wrong-answer review and write the reason for the correct option in one sentence.",
             "Spend 15 minutes on the weakest topic before attempting fresh questions.",
             "Reattempt this exam's incorrect questions after a short break without looking at the answers.",
+            "Flag fast wrong answers as misconception drills and slow wrong answers as basics-first review.",
             "Use related practice questions to separate similar concepts that caused mistakes.",
-            "Keep strong topics in rotation with quick spaced-repetition reviews.",
         ],
     )

@@ -173,6 +173,7 @@ class ExamStartResponse(BaseModel):
 class ExamAnswerSubmission(BaseModel):
     mcq_id: int
     selected_option: str
+    time_spent_seconds: int = Field(default=0, ge=0)
 
 
 class ExamSubmitRequest(BaseModel):
@@ -193,6 +194,7 @@ class ExamAnswerDetail(BaseModel):
     selected_option: str | None
     correct_option: str
     is_correct: bool
+    time_spent_seconds: int = 0
 
 
 # ── Practice ───────────────────────────────────────────────────────────────────
@@ -325,6 +327,8 @@ class ExamAnswerDetailWithPractice(BaseModel):
     selected_option: str | None
     correct_option: str
     is_correct: bool
+    time_spent_seconds: int = 0
+    confidence_rating: int | None = None
     practice_related_questions: list[str] = []
 
 

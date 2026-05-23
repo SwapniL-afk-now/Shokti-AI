@@ -309,3 +309,39 @@ async def test_confidence_profile_endpoint(async_client: AsyncClient):
     assert profile_data["confident_master"] == 0
     assert profile_data["confident_mistake"] == 1
     assert profile_data["no_knowledge"] == 1
+
+
+async def test_confidence_profile_prefers_persisted_categories(async_client: AsyncClient):
+    reg_res = await async_client.post("/api/auth/register", json={
+        "email": "persisted_confidence@test.com",
+        "password": "mypassword123",
+        "name": "Persisted Confidence"
+    })
+    assert reg_res.status_code == 200
+    headers = {"Authorization": f"Bearer {reg_res.json()['access_token']}"}
+
+    conn = sqlite3.connect(shokti.core.config.DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM students WHERE email = ?", ("persisted_confidence@test.com",))
+    student_id = cursor.fetchone()[0]
+    cursor.executemany("""
+        INSERT INTO student_answer_log
+            (student_id, mcq_id, is_correct, time_spent_seconds, confidence_rating)
+        VALUES (?, ?, ?, ?, ?)
+    """, [
+        (student_id, 1, 1, 99, 1),
+        (student_id, 2, 1, 1, 2),
+        (student_id, 3, 0, 99, 3),
+        (student_id, 4, 0, 1, 4),
+    ])
+    conn.commit()
+    conn.close()
+
+    profile_res = await async_client.get("/api/student/confidence-profile", headers=headers)
+    assert profile_res.status_code == 200
+    assert profile_res.json() == {
+        "lucky_guess": 1,
+        "confident_master": 1,
+        "confident_mistake": 1,
+        "no_knowledge": 1,
+    }

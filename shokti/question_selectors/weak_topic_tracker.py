@@ -18,6 +18,8 @@ class TopicStats:
     correct: int
     accuracy: float
     wrong_count: int
+    confident_mistake_count: int = 0
+    no_knowledge_count: int = 0
     last_seen_at: Optional[str] = None
 
 
@@ -29,6 +31,8 @@ def get_topic_stats(conn: sqlite3.Connection, student_id: str) -> list[TopicStat
             COUNT(*) as attempts,
             SUM(CASE WHEN sal.is_correct = 1 THEN 1 ELSE 0 END) as correct,
             SUM(CASE WHEN sal.is_correct = 0 THEN 1 ELSE 0 END) as wrong_count,
+            SUM(CASE WHEN sal.confidence_rating = 3 THEN 1 ELSE 0 END) as confident_mistake_count,
+            SUM(CASE WHEN sal.confidence_rating = 4 THEN 1 ELSE 0 END) as no_knowledge_count,
             MAX(sal.answered_at) as last_seen_at
         FROM student_answer_log sal
         JOIN question_bank qb ON sal.mcq_id = qb.id
@@ -46,6 +50,8 @@ def get_topic_stats(conn: sqlite3.Connection, student_id: str) -> list[TopicStat
             correct=row['correct'],
             accuracy=row['correct'] / row['attempts'] if row['attempts'] > 0 else 0.0,
             wrong_count=row['wrong_count'],
+            confident_mistake_count=row['confident_mistake_count'] or 0,
+            no_knowledge_count=row['no_knowledge_count'] or 0,
             last_seen_at=row['last_seen_at'],
         )
         for row in rows
@@ -111,6 +117,8 @@ def get_persistent_weak_topics(conn: sqlite3.Connection, student_id: str) -> lis
             correct=0,
             accuracy=row['avg_accuracy'],
             wrong_count=0,
+            confident_mistake_count=0,
+            no_knowledge_count=0,
             last_seen_at=None,
         )
         for row in rows
