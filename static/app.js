@@ -199,10 +199,9 @@ async function handleRouting() {
       return;
     }
 
-    // Lock routing for dashboard, practice, and analytics if exams are locked
-    const lockedTabs = ['dashboard', 'practice', 'analytics'];
-    if (state.examsLocked && lockedTabs.includes(tab)) {
-      window.location.hash = '#exams';
+    // Lock routing for practice and analytics if exams are locked; dashboard and exams always accessible
+    if (state.examsLocked && (tab === 'practice' || tab === 'analytics')) {
+      window.location.hash = '#dashboard';
       return;
     }
     
@@ -233,17 +232,10 @@ function updateNavigationTabsLock() {
   const analyticsTab = document.getElementById('nav-analytics');
   
   if (dashboardTab) {
-    if (locked) {
-      dashboardTab.classList.add('tab-locked');
-      dashboardTab.innerHTML = '🔒 Dashboard';
-      dashboardTab.style.opacity = '0.6';
-      dashboardTab.style.cursor = 'not-allowed';
-    } else {
-      dashboardTab.classList.remove('tab-locked');
-      dashboardTab.innerHTML = 'Dashboard';
-      dashboardTab.style.opacity = '1';
-      dashboardTab.style.cursor = 'pointer';
-    }
+    dashboardTab.classList.remove('tab-locked');
+    dashboardTab.innerHTML = 'Dashboard';
+    dashboardTab.style.opacity = '1';
+    dashboardTab.style.cursor = 'pointer';
   }
   if (practiceTab) {
     if (locked) {
@@ -282,10 +274,11 @@ function switchAuthTab(tab) {
 }
 
 function switchPortalTab(tab) {
-  const lockedTabs = ['dashboard', 'practice', 'analytics'];
-  if (state.examsLocked && lockedTabs.includes(tab)) {
+  // Lock practice/analytics if exams are locked; exams tab is always navigable
+  // (Start buttons bypass switchPortalTab entirely so mock test always works)
+  if (state.examsLocked && (tab === 'practice' || tab === 'analytics')) {
     alert("🔒 Complete all available fixed exams first to unlock your personalized learning workspace, adaptive practice sessions, and detailed analytics!");
-    window.location.hash = '#exams';
+    window.location.hash = '#dashboard';
     return;
   }
 
@@ -555,7 +548,9 @@ async function startMockTest() {
       return;
     }
     const nextExam = exams.find(ex => !ex.is_completed) || exams[0];
-    switchPortalTab('exams');
+    // Bypass switchPortalTab (which locks when examsLocked)
+    // Mock test is always startable from dashboard
+    showView('portal-view');
     await startExam(nextExam.exam_id, nextExam.title);
   } catch (e) {
     alert("Failed to start mock test: " + e.message);
@@ -697,7 +692,9 @@ async function loadExams() {
 }
 
 async function startShortcutExam(examId) {
-  switchPortalTab('exams');
+  // Bypass switchPortalTab (which locks exams when examsLocked)
+  // The mock exam is how users unlock the system — always allow starting
+  showView('portal-view');
   await startExam(examId);
 }
 
