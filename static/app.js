@@ -59,6 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- API Helpers ---
+const API_BASE_URL = (window.API_BASE_URL || '').replace(/\/$/, '');
+
+function apiUrl(path) {
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_BASE_URL}${path}`;
+}
+
 async function apiRequest(path, method = 'GET', body = null) {
   const headers = {
     'Content-Type': 'application/json'
@@ -76,7 +83,7 @@ async function apiRequest(path, method = 'GET', body = null) {
     options.body = JSON.stringify(body);
   }
   
-  let response = await fetch(path, options);
+  let response = await fetch(apiUrl(path), options);
   
   // Handle token expiration / refresh
   if (response.status === 401 && state.refreshToken) {
@@ -85,7 +92,7 @@ async function apiRequest(path, method = 'GET', body = null) {
       headers['Authorization'] = `Bearer ${state.token}`;
       // Need to re-create options with fresh headers
       const retryOptions = { ...options, headers };
-      response = await fetch(path, retryOptions);
+      response = await fetch(apiUrl(path), retryOptions);
     } else {
       handleLogout();
       throw new Error("Session expired. Please log in again.");
@@ -110,7 +117,7 @@ function escapeAttribute(value) {
 
 async function tryTokenRefresh() {
   try {
-    const res = await fetch('/api/auth/refresh', {
+    const res = await fetch(apiUrl('/api/auth/refresh'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: state.refreshToken })
