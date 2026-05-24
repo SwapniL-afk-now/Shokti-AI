@@ -2,21 +2,26 @@
 import uuid
 import json
 import asyncio
+import logging
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+import logging
+logger = logging.getLogger(__name__)
+
 from shokti.api.deps import get_db_dep, get_current_student_dep
 from shokti.api.models import Student
 from shokti.api.schemas import (
-    PracticeSessionCreate,
-    PracticeSessionResponse,
-    AnswerSubmission,
-    AnswerResponse,
+    ExamAnswerDetailWithPractice,
     ExamAnswerSubmission,
     ExamSubmissionResponseWithFeedback,
     ExamSubmitRequest,
     MCQListItem,
+    PracticeSessionCreate,
+    PracticeSessionResponse,
+    AnswerSubmission,
+    AnswerResponse,
 )
 from shokti.core.config import DB_PATH, MCQ as MCQ_CONFIG
 from shokti.api.routers.exams import (
@@ -26,8 +31,10 @@ from shokti.api.routers.exams import (
     _empty_topic_result,
     _fill_missing_related_practice,
     _generate_and_store_feedback,
+    _get_related_practice_questions,
     _get_student_median_time,
     _load_mcq_meta,
+    _normalize_question_text,
     _topic_result_to_breakdown,
 )
 
@@ -104,7 +111,8 @@ async def submit_practice_session(
 
     mcq_meta = await _load_mcq_meta(db, [answer.mcq_id for answer in answers])
     prq_map = _build_related_question_map(mcq_meta)
-    await _fill_missing_related_practice(db, mcq_meta, prq_map)
+    seen_prq_texts: set[str] = set()
+    await _fill_missing_related_practice(db, mcq_meta, prq_map, seen_prq_texts)
     median_time = await _get_student_median_time(db, student.id, [max(0, answer.time_spent_seconds or 0) for answer in answers])
 
     chapter_results: dict[str, dict[str, dict[str, int]]] = {}
@@ -158,15 +166,25 @@ async def submit_practice_session(
             chapter_results[chapter][topic]["correct"] += 1
         _apply_timing_to_topic_result(chapter_results[chapter][topic], time_spent, confidence_rating)
 
-        details.append({
-            "mcq_id": answer.mcq_id,
-            "selected_option": selected_option,
-            "correct_option": correct_opt,
-            "is_correct": is_correct,
-            "time_spent_seconds": time_spent,
-            "confidence_rating": confidence_rating,
-            "practice_related_questions": [] if is_correct else prq_map.get(answer.mcq_id, []),
-        })
+        related_prqs = []
+        if not is_correct:
+            try:
+                related_prqs = await _get_related_practice_questions(
+                    db, answer.mcq_id, row.get("question", ""), seen_prq_texts, limit=2
+                )
+            except Exception as e:
+                logger.warning(f"Failed to fetch related questions for mcq_id={answer.mcq_id}: {e}")
+                related_prqs = []
+
+        details.append(ExamAnswerDetailWithPractice(
+            mcq_id=answer.mcq_id,
+            selected_option=selected_option,
+            correct_option=correct_opt,
+            is_correct=is_correct,
+            time_spent_seconds=time_spent,
+            confidence_rating=confidence_rating,
+            practice_related_questions=related_prqs,
+        ))
 
     total = len(details)
     score_pct = (correct_count / total * 100) if total > 0 else 0.0
@@ -200,7 +218,7 @@ async def submit_practice_session(
             "score_percentage": score_pct,
             "time_taken_seconds": time_taken_seconds,
             "answers_json": json.dumps([answer.model_dump() for answer in answers], ensure_ascii=False),
-            "details_json": json.dumps(details, ensure_ascii=False),
+            "details_json": json.dumps([detail.model_dump(mode='json') for detail in details], ensure_ascii=False),
             "topic_breakdown_json": json.dumps(topic_breakdown, ensure_ascii=False),
             "submitted_at": datetime.now(timezone.utc),
         },

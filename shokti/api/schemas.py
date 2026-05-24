@@ -322,6 +322,21 @@ class ExamFeedback(BaseModel):
     personalized_study_recommendations: list[str]
 
 
+class RelatedPracticeQuestion(BaseModel):
+    id: int
+    source: str  # "qbank" | "generated"
+    question: str
+    options: MCQOptions
+    correct_answer: MCQCorrectAnswer
+    subject: str | None
+    chapter: str | None
+    topic: str | None
+    difficulty: str | None
+
+    class Config:
+        from_attributes = True
+
+
 class ExamAnswerDetailWithPractice(BaseModel):
     mcq_id: int
     selected_option: str | None
@@ -329,7 +344,7 @@ class ExamAnswerDetailWithPractice(BaseModel):
     is_correct: bool
     time_spent_seconds: int = 0
     confidence_rating: int | None = None
-    practice_related_questions: list[str] = []
+    practice_related_questions: list[RelatedPracticeQuestion] = []
 
 
 class ExamSubmissionResponseWithFeedback(BaseModel):

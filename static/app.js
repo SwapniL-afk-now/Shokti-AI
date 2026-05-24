@@ -1568,12 +1568,12 @@ function renderReviewQuestionDetails(mcq, item) {
   }
   
   let prqHtml = '';
-  if (!item.is_correct && item.practice_related_questions && item.practice_related_questions.length > 0) {
+  if (item.practice_related_questions && item.practice_related_questions.length > 0) {
     prqHtml = `
       <div class="review-prq-list">
-        <h5>📚 Related Practice Questions to Review:</h5>
+        <h5>📚 Related Practice Questions:</h5>
         <ul>
-          ${item.practice_related_questions.map(qText => `<li>${qText}</li>`).join('')}
+          ${item.practice_related_questions.map(prq => `<li>${prq.question || prq.question_text || prq || ''}</li>`).join('')}
         </ul>
       </div>
     `;

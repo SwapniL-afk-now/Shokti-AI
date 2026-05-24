@@ -33,6 +33,7 @@ from shokti.api.schemas import (
     ExamSubmissionResponseWithFeedback,
     ExamSubmitRequest,
     MCQListItem,
+    RelatedPracticeQuestion,
     StrongTopicFeedback,
     WeakTopicFeedback,
 )
@@ -415,6 +416,17 @@ async def submit_exam(
             chapter_results[chapter][topic]["correct"] += 1
         _apply_timing_to_topic_result(chapter_results[chapter][topic], time_spent, confidence_rating)
 
+        # Fixed exam questions are stable, so always attach their stable related
+        # practice set instead of only showing practice after a wrong answer.
+        related_prqs = []
+        try:
+            related_prqs = await _get_related_practice_questions(
+                db, answer.mcq_id, row.get("question", ""), seen_prq_texts, limit=2
+            )
+        except Exception as e:
+            logger.warning(f"Failed to fetch related questions for mcq_id={answer.mcq_id}: {e}")
+            related_prqs = []
+
         details.append(ExamAnswerDetailWithPractice(
             mcq_id=answer.mcq_id,
             selected_option=selected_option,
@@ -422,7 +434,7 @@ async def submit_exam(
             is_correct=is_correct,
             time_spent_seconds=time_spent,
             confidence_rating=confidence_rating,
-            practice_related_questions=[] if is_correct else prq_map.get(answer.mcq_id, []),
+            practice_related_questions=related_prqs,
         ))
 
     total = len(details)
@@ -455,7 +467,7 @@ async def submit_exam(
             "score_percentage": score_pct,
             "time_taken_seconds": time_taken_seconds,
             "answers_json": json.dumps([answer.model_dump() for answer in answers], ensure_ascii=False),
-            "details_json": json.dumps([detail.model_dump() for detail in details], ensure_ascii=False),
+            "details_json": json.dumps([detail.model_dump(mode='json') for detail in details], ensure_ascii=False),
             "topic_breakdown_json": json.dumps(topic_breakdown, ensure_ascii=False),
             "submitted_at": datetime.now(timezone.utc),
         },
@@ -651,6 +663,27 @@ def _normalize_question_text(text: str) -> str:
     return text.strip()
 
 
+def _is_disallowed_related_practice_question(text: str) -> bool:
+    """Reject bare objective stems that do not work as related practice prompts."""
+    normalized = _normalize_question_text(text)
+    if not normalized:
+        return True
+
+    disallowed_patterns = (
+        "কোনটি",
+        "কোনটিকে",
+        "কোনটিতে",
+        "কোন ধরনের",
+        "নিচের কোনটি",
+        "নিম্নের কোনটি",
+        "নিচের কোনটিকে",
+        "নিম্নের কোনটিকে",
+        "which one",
+        "which of the following",
+    )
+    return any(pattern in normalized for pattern in disallowed_patterns)
+
+
 def _dedupe_related_questions(
     questions: list[str],
     original_question: str = "",
@@ -688,6 +721,147 @@ def _dedupe_related_questions(
             break
 
     return unique
+
+
+async def _get_related_practice_questions(
+    db: AsyncSession,
+    mcq_id: int,
+    original_question_text: str,
+    seen_prq_texts: set[str],
+    limit: int = 2,
+) -> list[RelatedPracticeQuestion]:
+    """
+    Fetch related practice questions for a given MCQ from both qbank and generated sources.
+    Returns up to `limit` unique RelatedPracticeQuestion objects.
+    """
+    # Get topic/chapter filters from the original MCQ
+    row = await db.execute(
+        text("""
+            SELECT chapter_id, chapter_name, topic_id, topic_name,
+                   subject, difficulty
+            FROM question_bank
+            WHERE id = :mcq_id
+        """),
+        {"mcq_id": mcq_id},
+    )
+    orig = row.fetchone()
+    if not orig:
+        return []
+
+    orig_dict = dict(orig._mapping)
+    base_conditions = ["id != :mcq_id", "question IS NOT NULL", "TRIM(question) != ''"]
+    base_params = {"mcq_id": mcq_id}
+
+    scopes: list[tuple[str, dict]] = []
+    if orig_dict.get("topic_id"):
+        scopes.append(("topic_id = :topic_id", {"topic_id": orig_dict["topic_id"]}))
+    if orig_dict.get("chapter_id"):
+        scopes.append(("chapter_id = :chapter_id", {"chapter_id": orig_dict["chapter_id"]}))
+    if orig_dict.get("subject"):
+        scopes.append(("subject = :subject", {"subject": orig_dict["subject"]}))
+    scopes.append(("1 = 1", {}))
+
+    candidates_raw = []
+    for scope_condition, scope_params in scopes:
+        params = {**base_params, **scope_params}
+        result = await db.execute(
+            text(f"""
+                SELECT id, chapter_id, chapter_name, topic_id, topic_name,
+                       question, options, correct_answer,
+                       subject, difficulty, origin
+                FROM question_bank
+                WHERE {' AND '.join(base_conditions + [scope_condition])}
+                ORDER BY
+                    CASE
+                        WHEN origin = 'question_bank' THEN 1
+                        WHEN origin = 'generated' THEN 2
+                        ELSE 3
+                    END,
+                    CASE difficulty
+                        WHEN 'easy' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'hard' THEN 3
+                        ELSE 2
+                    END,
+                    id
+                LIMIT 80
+            """),
+            params,
+        )
+        candidates_raw = result.fetchall()
+        if candidates_raw:
+            break
+
+    logger.info(f"Fetching related practice questions: {len(candidates_raw)} candidates for mcq_id={mcq_id}")
+
+    # Build RelatedPracticeQuestion objects and deduplicate
+    original_norm = _normalize_question_text(original_question_text)
+    if original_norm:
+        seen_prq_texts.add(original_norm)
+
+    unique_by_id: dict[int, RelatedPracticeQuestion] = {}
+    deferred_seen_candidates: list[RelatedPracticeQuestion] = []
+
+    for r in candidates_raw:
+        rd = dict(r._mapping)
+        q_id = rd["id"]
+        q_text = rd.get("question", "")
+        q_norm = _normalize_question_text(q_text)
+
+        if q_id in unique_by_id:
+            continue
+        if _is_disallowed_related_practice_question(q_text):
+            continue
+
+        # Parse options and correct_answer
+        try:
+            opts = json.loads(rd["options"]) if isinstance(rd["options"], str) else (rd["options"] or {})
+        except Exception:
+            opts = {}
+        try:
+            ca = json.loads(rd["correct_answer"]) if isinstance(rd["correct_answer"], str) else (rd["correct_answer"] or {})
+        except Exception:
+            ca = {}
+
+        rp_q = RelatedPracticeQuestion(
+            id=q_id,
+            source="qbank" if (rd.get("origin") or "question_bank") == "question_bank" else (rd.get("origin") or "qbank"),
+            question=q_text,
+            options=opts,
+            correct_answer=ca,
+            subject=rd.get("subject"),
+            chapter=rd.get("chapter_name"),
+            topic=rd.get("topic_name"),
+            difficulty=rd.get("difficulty"),
+        )
+
+        if q_norm in seen_prq_texts:
+            deferred_seen_candidates.append(rp_q)
+            continue
+
+        unique_by_id[q_id] = rp_q
+        seen_prq_texts.add(q_norm)
+
+        if len(unique_by_id) >= limit:
+            break
+
+    # Never show an empty related section just because earlier questions already
+    # consumed the closest texts. Reuse deterministic candidates only as a last resort.
+    if len(unique_by_id) < limit:
+        for rp_q in deferred_seen_candidates:
+            if rp_q.id in unique_by_id:
+                continue
+            unique_by_id[rp_q.id] = rp_q
+            if len(unique_by_id) >= limit:
+                break
+
+    result_list = list(unique_by_id.values())
+    logger.info(
+        f"Combined related candidate count: {len(candidates_raw)}, "
+        f"Unique related candidate count after dedupe: {len(result_list)}, "
+        f"Returning {len(result_list)} related questions for question ID: {mcq_id}"
+    )
+    return result_list
 
 
 def _build_related_question_map(
