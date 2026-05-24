@@ -164,7 +164,7 @@ MCQs to ground:
 For each MCQ, return:
 1. source_quote: exact text (1-2 sentences) supporting the correct answer.
 2. pdf_page_number: page number from the retrieved content.
-3. practice_related_questions: find 2-3 OTHER MCQs in the store semantically similar to this one (by topic or concept).
+3. practice_related_questions: find 2-3 DIFFERENT MCQs in the store that are semantically similar (related topics or concepts). IMPORTANT: Do NOT repeat the same question text, do NOT return variants of the same question with minor word changes, and do NOT copy the original question itself. Each related question must be genuinely distinct — different concept, different wording, different focus.
 
 Return ONLY valid JSON with this exact format:
 {{"store_name": "{store_name}", "topic": "...", "number_of_mcqs": ..., "mcqs": [{{"id": ..., "source_quote": "...", "pdf_page_number": ..., "practice_related_questions": [...]}}]}}

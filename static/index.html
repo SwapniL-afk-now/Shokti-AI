@@ -189,8 +189,8 @@
       <!-- Primary Navigation Tabs -->
       <nav class="app-nav">
         <button id="nav-dashboard" class="nav-tab active" onclick="switchPortalTab('dashboard')">Dashboard</button>
-        <button id="nav-practice" class="nav-tab" onclick="switchPortalTab('practice')">Practice Session</button>
         <button id="nav-exams" class="nav-tab" onclick="switchPortalTab('exams')">Fixed Exams</button>
+        <button id="nav-practice" class="nav-tab" onclick="switchPortalTab('practice')">Practice Session</button>
         <button id="nav-analytics" class="nav-tab" onclick="switchPortalTab('analytics')">Analytics</button>
         <button id="nav-profile" class="nav-tab" onclick="switchPortalTab('profile')">Profile</button>
       </nav>
@@ -201,7 +201,19 @@
         <!-- A. Dashboard Tab -->
         <section id="tab-dashboard" class="portal-tab-content active">
           <div class="dashboard-grid">
-            
+
+            <!-- Fixed Exam Progress Banner -->
+            <div id="dashboard-exam-progress-banner" class="dash-card progress-banner-card" style="display:none;">
+              <div class="progress-banner-content">
+                <div class="progress-banner-icon">📋</div>
+                <div class="progress-banner-text">
+                  <h3 id="progress-banner-title">Fixed Exam Progress</h3>
+                  <p id="progress-banner-message">Complete all 3 fixed exams to unlock Practice Session and Analytics.</p>
+                  <div class="progress-banner-count" id="progress-banner-count">0/3</div>
+                </div>
+              </div>
+            </div>
+
             <div class="dash-card main-cta-card">
               <h2>Ready to take mock test?</h2>
               <p>Start one of the fixed model tests and let Shokti track your performance across every attempt.</p>
@@ -209,14 +221,14 @@
                 <button class="btn primary-btn" onclick="startMockTest()">Start Mock Test</button>
               </div>
             </div>
-            
+
             <div class="dash-card stats-overview-card">
               <h3>Weakest Topics</h3>
               <div id="weak-topics-list" class="dashboard-weak-list">
                 <p class="muted-text">Great job! No weak topics found yet. Take a diagnostic or mock exam to populate your stats.</p>
               </div>
             </div>
-            
+
             <div class="dash-card exam-streak-card">
               <h3>Exam Status</h3>
               <p>Prepare for real Admissions. Complete all mock exams to unlock automatic parameter tuning.</p>
@@ -224,7 +236,7 @@
                 <!-- Loaded dynamically -->
               </div>
             </div>
-            
+
           </div>
         </section>
         

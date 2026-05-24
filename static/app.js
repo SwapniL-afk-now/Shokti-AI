@@ -4,6 +4,8 @@ let state = {
   refreshToken: localStorage.getItem('shokti_refresh_token') || '',
   user: null,
   examsLocked: false,
+  totalExams: 0,
+  completedExams: 0,
   latestExamFeedback: null,
   latestExamAnswerAudit: [],
   analysisPollInterval: null,
@@ -176,8 +178,11 @@ async function handleRouting() {
       const exams = await apiRequest('/api/exams');
       const totalExams = exams.length;
       const completedExams = exams.filter(ex => ex.is_completed);
+      state.totalExams = totalExams;
+      state.completedExams = completedExams.length;
       state.examsLocked = totalExams > 0 && (completedExams.length < totalExams);
       updateNavigationTabsLock();
+      updateExamProgressBanner();
     } catch (err) {
       console.warn("Failed to check exams completion status on routing", err);
     }
@@ -265,6 +270,34 @@ function updateNavigationTabsLock() {
   }
 }
 
+function updateExamProgressBanner() {
+  const total = state.totalExams || 0;
+  const completed = state.completedExams || 0;
+  const remaining = Math.max(0, total - completed);
+  const banner = document.getElementById('dashboard-exam-progress-banner');
+  if (!banner) return;
+
+  const countEl = document.getElementById('progress-banner-count');
+  const messageEl = document.getElementById('progress-banner-message');
+  const titleEl = document.getElementById('progress-banner-title');
+
+  if (total === 0) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'block';
+  if (countEl) countEl.textContent = `${completed}/${total}`;
+
+  if (remaining === 0) {
+    if (titleEl) titleEl.textContent = 'All Fixed Exams Complete!';
+    if (messageEl) messageEl.textContent = 'Practice Session and Analytics are now unlocked.';
+  } else {
+    if (titleEl) titleEl.textContent = 'Fixed Exam Progress';
+    if (messageEl) messageEl.textContent = `Complete ${remaining} more fixed exam${remaining === 1 ? '' : 's'} to unlock Practice Session and Analytics.`;
+  }
+}
+
 function switchAuthTab(tab) {
   document.getElementById('tab-login-btn').classList.toggle('active', tab === 'login');
   document.getElementById('tab-register-btn').classList.toggle('active', tab === 'register');
@@ -277,7 +310,11 @@ function switchPortalTab(tab) {
   // Lock practice/analytics if exams are locked; exams tab is always navigable
   // (Start buttons bypass switchPortalTab entirely so mock test always works)
   if (state.examsLocked && (tab === 'practice' || tab === 'analytics')) {
-    alert("🔒 Complete all available fixed exams first to unlock your personalized learning workspace, adaptive practice sessions, and detailed analytics!");
+    const remaining = Math.max(0, state.totalExams - state.completedExams);
+    const msg = remaining === 1
+      ? "🔒 Complete 1 more fixed exam to unlock Practice Session and Analytics."
+      : `🔒 Complete ${remaining} more fixed exams to unlock Practice Session and Analytics.`;
+    alert(msg);
     window.location.hash = '#dashboard';
     return;
   }
@@ -643,8 +680,10 @@ async function loadExams() {
     
     const totalExams = exams.length;
     const completedExams = exams.filter(ex => ex.is_completed);
+    state.totalExams = totalExams;
+    state.completedExams = completedExams.length;
     state.examsLocked = totalExams > 0 && (completedExams.length < totalExams);
-    
+
     const banner = document.getElementById('exams-diagnostic-banner');
     if (banner) {
       if (state.examsLocked) {
@@ -653,8 +692,9 @@ async function loadExams() {
         banner.classList.add('hidden');
       }
     }
-    
+
     updateNavigationTabsLock();
+    updateExamProgressBanner();
 
     const container = document.getElementById('exams-grid-data');
     container.innerHTML = '';
@@ -1113,8 +1153,11 @@ async function submitExam() {
       const exams = await apiRequest('/api/exams');
       const totalExams = exams.length;
       const completedExams = exams.filter(ex => ex.is_completed);
+      state.totalExams = totalExams;
+      state.completedExams = completedExams.length;
       state.examsLocked = totalExams > 0 && (completedExams.length < totalExams);
       updateNavigationTabsLock();
+      updateExamProgressBanner();
     } catch (err) {
       console.warn("Failed to check exams completion status on submit", err);
     }

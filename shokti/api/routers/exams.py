@@ -2,7 +2,9 @@
 import asyncio
 import json
 import logging
+import re
 import sqlite3
+import unicodedata
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -359,7 +361,9 @@ async def submit_exam(
 
     mcq_meta = await _load_mcq_meta(db, [answer.mcq_id for answer in answers])
     prq_map = _build_related_question_map(mcq_meta)
-    await _fill_missing_related_practice(db, mcq_meta, prq_map)
+    # Track seen texts globally so related questions don't repeat across the review page
+    seen_prq_texts: set[str] = set()
+    await _fill_missing_related_practice(db, mcq_meta, prq_map, seen_prq_texts)
     median_time = await _get_student_median_time(db, student.id, [max(0, answer.time_spent_seconds or 0) for answer in answers])
     chapter_results: dict[str, dict[str, dict[str, int]]] = {}
     details = []
@@ -634,15 +638,86 @@ def _topic_result_to_breakdown(chapter_results: dict[str, dict[str, dict]]) -> l
     return breakdown
 
 
-def _build_related_question_map(mcq_meta: dict[int, dict]) -> dict[int, list[str]]:
+def _normalize_question_text(text: str) -> str:
+    if not text:
+        return ""
+    # Normalize unicode (NFC → NFC, collapse all-composed forms)
+    text = unicodedata.normalize("NFC", text)
+    # Lowercase
+    text = text.lower()
+    # Collapse whitespace/newlines to single spaces
+    text = re.sub(r"\s+", " ", text)
+    # Strip leading/trailing whitespace
+    return text.strip()
+
+
+def _dedupe_related_questions(
+    questions: list[str],
+    original_question: str = "",
+    seen_texts: set[str] | None = None,
+    max_items: int = 3,
+) -> list[str]:
+    """
+    Deduplicate a list of related practice question strings.
+
+    - Removes null/empty values
+    - Removes duplicates by normalized text (case-insensitive, whitespace-collapsed)
+    - Removes questions matching the original question text
+    - Tracks globally-seen texts to avoid repeats across the review page
+    - Returns at most `max_items` unique questions
+    """
+    if seen_texts is None:
+        seen_texts = set()
+
+    original_norm = _normalize_question_text(original_question)
+    if original_norm:
+        seen_texts.add(original_norm)
+
+    unique: list[str] = []
+    for q in questions:
+        if not q or not q.strip():
+            continue
+        norm = _normalize_question_text(q)
+        if not norm:
+            continue
+        if norm in seen_texts:
+            continue
+        seen_texts.add(norm)
+        unique.append(q)
+        if len(unique) >= max_items:
+            break
+
+    return unique
+
+
+def _build_related_question_map(
+    mcq_meta: dict[int, dict],
+    seen_prq_texts: set[str] | None = None,
+) -> dict[int, list[str]]:
+    if seen_prq_texts is None:
+        seen_prq_texts = set()
     prq_map = {}
     for mcq_id, meta in mcq_meta.items():
         try:
             raw = meta.get("practice_related_questions", "[]")
             parsed = json.loads(raw) if isinstance(raw, str) else (raw or [])
-            prq_map[mcq_id] = parsed if isinstance(parsed, list) else []
+            if not isinstance(parsed, list):
+                parsed = []
         except (json.JSONDecodeError, TypeError):
-            prq_map[mcq_id] = []
+            parsed = []
+        # Deduplicate: remove empty/null, normalize, dedupe within list and against global seen set
+        original_norm = _normalize_question_text(meta.get("question", ""))
+        if original_norm:
+            seen_prq_texts.add(original_norm)
+        unique = []
+        for q in parsed:
+            norm = _normalize_question_text(q)
+            if norm and norm not in seen_prq_texts:
+                seen_prq_texts.add(norm)
+                unique.append(q)
+                if len(unique) >= 3:
+                    break
+        prq_map[mcq_id] = unique
     return prq_map
 
 
@@ -650,7 +725,10 @@ async def _fill_missing_related_practice(
     db: AsyncSession,
     mcq_meta: dict[int, dict],
     prq_map: dict[int, list[str]],
+    seen_prq_texts: set[str] | None = None,
 ) -> None:
+    if seen_prq_texts is None:
+        seen_prq_texts = set()
     for mcq_id, meta in mcq_meta.items():
         if prq_map.get(mcq_id):
             continue
@@ -683,11 +761,24 @@ async def _fill_missing_related_practice(
                         ELSE 2
                     END,
                     id
-                LIMIT 3
+                LIMIT 6
             """),
             params,
         )
-        prq_map[mcq_id] = [row.question for row in result.fetchall() if row.question]
+        raw_questions = [row.question for row in result.fetchall() if row.question]
+        # Deduplicate against seen texts and within this MCQ's list
+        original_norm = _normalize_question_text(meta.get("question", ""))
+        if original_norm:
+            seen_prq_texts.add(original_norm)
+        unique = []
+        for q in raw_questions:
+            norm = _normalize_question_text(q)
+            if norm and norm not in seen_prq_texts:
+                seen_prq_texts.add(norm)
+                unique.append(q)
+                if len(unique) >= 3:
+                    break
+        prq_map[mcq_id] = unique
 
 
 async def _get_attempt_row(db: AsyncSession, student_id: str, attempt_id: str):
